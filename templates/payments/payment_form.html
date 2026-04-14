@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Record Payment - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Record Payment: {{ order.invoice_number }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Payment Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="text-muted mb-1">Customer</p>
+                    <h6>{{ order.party.name }}</h6>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted mb-1">Total Amount Due</p>
+                    <h3 class="text-danger">₹{{ order.balance_amount }}</h3>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_amount" class="form-label">Amount Collected (₹)</label>
+                        <input type="number" name="amount" id="id_amount" class="form-control" step="0.01" value="{{ order.balance_amount }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_mode" class="form-label">Payment Mode</label>
+                        <select name="mode" id="id_mode" class="form-select" required>
+                            <option value="upi">UPI</option>
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_transaction_id" class="form-label">Transaction Reference (Optional)</label>
+                        <input type="text" name="transaction_id" id="id_transaction_id" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_notes" class="form-label">Notes (Optional)</label>
+                        <textarea name="notes" id="id_notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Record Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

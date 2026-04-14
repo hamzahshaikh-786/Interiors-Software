@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue Stock Purchase - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Catalogue Stock Purchase</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">General Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="party" class="form-label">Party / Vendor</label>
+                            <select name="party" id="party" class="form-select select2-party" required>
+                                <option value="">Select party...</option>
+                                {% for p in parties %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="notes" class="form-label">Notes</label>
+                            <input type="text" name="notes" id="notes" class="form-control" placeholder="Optional notes">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Purchase Items</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                        <i class="bi bi-plus"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0" id="items-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Catalogue Type</th>
+                                    <th>Quantity</th>
+                                    <th style="width: 50px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="item-row">
+                                    <td>
+                                        <select name="catalogue_type" class="form-select" required>
+                                            <option value="">Select catalogue type...</option>
+                                            {% for ct in catalogue_types %}
+                                            <option value="{{ ct.id }}">{{ ct.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control" min="1" required>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg">Submit Stock Purchase</button>
+                <a href="{% url 'catalogue_purchase_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.select2-party').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select party...',
+            width: '100%'
+        });
+
+        const tableBody = document.querySelector('#items-table tbody');
+        const addItemBtn = document.querySelector('#add-item');
+
+        addItemBtn.addEventListener('click', function() {
+            const firstRow = tableBody.querySelector('.item-row');
+            const newRow = firstRow.cloneNode(true);
+            newRow.querySelectorAll('input').forEach(input => input.value = '');
+            newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+            tableBody.appendChild(newRow);
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item')) {
+                if (tableBody.querySelectorAll('.item-row').length > 1) {
+                    e.target.closest('.item-row').remove();
+                } else {
+                    alert('At least one item is required.');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

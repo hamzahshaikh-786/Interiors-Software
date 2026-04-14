@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Order - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Create Order</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Customer & Delivery Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="party" class="form-label">Customer (Party)</label>
+                            <select name="party" id="party" class="form-select" required>
+                                <option value="">Select a party...</option>
+                                {% for party in parties %}
+                                <option value="{{ party.id }}" data-address="{{ party.address }}" {% if selected_party_id == party.id|stringformat:"s" %}selected{% endif %}>{{ party.name }} (₹{{ party.balance.current_balance|default:"0.00" }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="gst_percent" class="form-label">GST Percent (%)</label>
+                            <input type="number" name="gst_percent" id="gst_percent" class="form-control" value="0">
+                        </div>
+                        <div class="col-12">
+                            <label for="delivery_address" class="form-label">Delivery Address</label>
+                            <textarea name="delivery_address" id="delivery_address" class="form-control" rows="3" required></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Order Items</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                        <i class="bi bi-plus"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0" id="items-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Design Type</th>
+                                    <th>Quantity (Meters)</th>
+                                    <th>Price/Meter (₹ - Optional)</th>
+                                    <th>Total (₹)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="item-row">
+                                    <td style="min-width: 300px;">
+                                        <select name="design_type" class="form-select design-select" required>
+                                            <option value="">Search for design (Name or Alias)...</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control quantity-input" step="0.01" required>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="price" class="form-control price-input" step="0.01">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control total-input" readonly>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end">Subtotal:</th>
+                                    <th id="subtotal">₹0.00</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="text-end">Grand Total (with GST):</th>
+                                    <th id="grand-total">₹0.00</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg">Place Order & Generate Invoice</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        const tableBody = document.querySelector('#items-table tbody');
+        const addItemBtn = document.querySelector('#add-item');
+        const subtotalEl = document.querySelector('#subtotal');
+        const grandTotalEl = document.querySelector('#grand-total');
+        const gstInput = document.querySelector('#gst_percent');
+        const partySelect = document.querySelector('#party');
+        const addressTextarea = document.querySelector('#delivery_address');
+
+        // Initialize Select2 for Party
+        $(partySelect).select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select a party...'
+        });
+
+        function initDesignSelect(element) {
+            $(element).select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search for design (Name or Alias)...',
+                width: '100%',
+                ajax: {
+                    url: '{% url "design_search_ajax" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            }).on('select2:select', function(e) {
+                const data = e.params.data;
+                const row = $(this).closest('.item-row');
+                const priceInput = row.find('.price-input');
+                if (data.price) {
+                    priceInput.val(data.price);
+                    calculateTotals();
+                }
+            });
+        }
+
+        // Initialize first row
+        initDesignSelect('.design-select');
+
+        // Form "Enter to Next Input" logic specific to this page
+        function setupEnterLogic() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = Array.from(form.querySelectorAll('input, select, textarea')).filter(el => {
+                    return !el.readOnly && !el.disabled && el.type !== 'hidden' && el.type !== 'submit';
+                });
+
+                inputs.forEach((input, index) => {
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            if (this.tagName === 'TEXTAREA' && !e.ctrlKey) return;
+                            e.preventDefault();
+                            if (index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            } else {
+                                if (form.checkValidity()) form.submit();
+                                else form.reportValidity();
+                            }
+                        }
+                    });
+                });
+            });
+        }
+        setupEnterLogic(); // Initial setup
+
+        $(partySelect).on('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const address = selectedOption.getAttribute('data-address');
+            if (address) {
+                addressTextarea.value = address;
+            } else {
+                addressTextarea.value = '';
+            }
+        });
+
+        function calculateTotals() {
+            let subtotal = 0;
+            const rows = tableBody.querySelectorAll('.item-row');
+            rows.forEach(row => {
+                const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
+                const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                const total = qty * price;
+                row.querySelector('.total-input').value = total.toFixed(2);
+                subtotal += total;
+            });
+            
+            const gst = parseFloat(gstInput.value) || 0;
+            const grandTotal = subtotal + (subtotal * gst / 100);
+            
+            subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+            grandTotalEl.textContent = `₹${grandTotal.toFixed(2)}`;
+        }
+
+        addItemBtn.addEventListener('click', function() {
+            const firstRow = tableBody.querySelector('.item-row');
+            
+            // Destroy select2 before cloning
+            $(firstRow).find('.design-select').select2('destroy');
+            
+            const newRow = firstRow.cloneNode(true);
+            
+            // Re-init select2 on original
+            initDesignSelect($(firstRow).find('.design-select'));
+
+            newRow.querySelectorAll('input').forEach(input => input.value = '');
+            
+            const newSelect = $(newRow).find('.design-select');
+            newSelect.empty().append('<option value="">Search for design (Name or Alias)...</option>');
+            
+            tableBody.appendChild(newRow);
+            initDesignSelect(newSelect);
+            setupEnterLogic(); // Re-setup for new row
+        });
+
+        tableBody.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantity-input') || e.target.classList.contains('price-input')) {
+                calculateTotals();
+            }
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item')) {
+                const rows = tableBody.querySelectorAll('.item-row');
+                if (rows.length > 1) {
+                    e.target.closest('.item-row').remove();
+                    calculateTotals();
+                    setupEnterLogic(); // Refresh indices
+                }
+            }
+        });
+
+        gstInput.addEventListener('input', calculateTotals);
+    });
+</script>
+{% endblock %}

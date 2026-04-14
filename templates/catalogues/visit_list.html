@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Visit History - Catalogue Tracking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Catalogue Visit History</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group btn-group-sm me-2">
+            <a href="?mode=chronological" class="btn btn-outline-secondary {% if mode == 'chronological' %}active{% endif %}">Chronological</a>
+            <a href="?mode=shop" class="btn btn-outline-secondary {% if mode == 'shop' %}active{% endif %}">Shop-wise Summary</a>
+        </div>
+        <a href="{% url 'catalogue_visit_add' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus"></i> New Visit Report
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {% for visit in visits %}
+        <div class="card shadow-sm mb-4 {% if not visit.all_present %}border-warning{% endif %}">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0">{{ visit.party.name }}</h5>
+                    <small class="text-muted">Visited by: {{ visit.visited_by.username }} | {{ visit.visit_date|date:"d M Y" }}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge {% if visit.all_present %}bg-success{% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ visit.summary }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row g-2">
+                            {% for item in visit.items.all %}
+                            <div class="col-sm-6 col-md-4">
+                                <div class="p-2 border rounded {% if item.is_present %}bg-light-success text-success{% else %}bg-light-danger text-danger{% endif %} d-flex align-items-center gap-2">
+                                    <i class="bi {% if item.is_present %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+                                    <span>{{ item.catalogue_type.name }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if visit.notes %}
+                        <div class="mt-3 p-3 bg-light rounded small">
+                            <strong>Visit Notes:</strong><br>
+                            {{ visit.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-center mt-3 mt-md-0">
+                        {% if visit.photo %}
+                        <img src="{{ visit.photo.url }}" class="img-fluid rounded shadow-sm border" style="max-height: 200px;" alt="Visit evidence">
+                        {% else %}
+                        <div class="p-4 bg-light text-muted border rounded">
+                            <i class="bi bi-camera-slash fs-2"></i><br>
+                            No photo captured
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 bg-white shadow-sm rounded">
+            <i class="bi bi-journal-x fs-1 text-muted"></i>
+            <p class="mt-2 text-muted">No visit reports found.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .bg-light-success { background-color: rgba(25, 135, 84, 0.05); }
+    .bg-light-danger { background-color: rgba(220, 53, 69, 0.05); }
+</style>
+{% endblock %}

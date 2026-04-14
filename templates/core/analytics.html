@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Analytics & Reports</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Sales Trends (Monthly)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div style="max-height: 300px; position: relative;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Inactive Customers</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="inactiveTabs">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#days7">7 Days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#days15">15 Days</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#days30">30 Days</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="days7" class="tab-pane fade show active">
+                        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            {% for party in inactive_7 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ party.name }}
+                                <a href="https://wa.me/{{ party.phone|slice:'-10:' }}" class="btn btn-sm btn-outline-success"><i class="bi bi-whatsapp"></i> Re-engage</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div id="days15" class="tab-pane fade">
+                        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            {% for party in inactive_15 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ party.name }}
+                                <a href="https://wa.me/{{ party.phone|slice:'-10:' }}" class="btn btn-sm btn-outline-success"><i class="bi bi-whatsapp"></i> Re-engage</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div id="days30" class="tab-pane fade">
+                        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                            {% for party in inactive_30 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ party.name }}
+                                <a href="https://wa.me/{{ party.phone|slice:'-10:' }}" class="btn btn-sm btn-outline-success"><i class="bi bi-whatsapp"></i> Re-engage</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white text-danger">
+                <h5 class="mb-0">Pending & Overdue Payments</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Party</th>
+                                <th>Balance</th>
+                                <th>Days Old</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in pending_payments %}
+                            <tr class="{% if order in overdue_payments %}table-danger{% endif %}">
+                                <td>{{ order.invoice_number }}</td>
+                                <td>{{ order.party.name }}</td>
+                                <td>₹{{ order.balance_amount }}</td>
+                                <td>{{ order.created_at|timesince }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Top Customers (By Value)</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for client in high_value_clients %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ client.party.name }}
+                        <span class="badge bg-primary rounded-pill">₹{{ client.total_debit }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const labels = {{ chart_data.labels|safe }};
+        const values = {{ chart_data.values|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Sales (₹)',
+                    data: values,
+                    borderColor: 'rgb(52, 152, 219)',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusLabels = {{ status_data.labels|safe }};
+        const statusValues = {{ status_data.values|safe }};
+
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusValues,
+                    backgroundColor: [
+                        '#6c757d', '#fd7e14', '#20c997', '#0dcaf0', 
+                        '#ffc107', '#198754', '#0d6efd', '#dc3545'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

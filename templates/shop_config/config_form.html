@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Configuration - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Shop Configuration</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">General Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="shop_name" class="form-label">Shop Name</label>
+                        <input type="text" name="shop_name" id="shop_name" class="form-control" value="{{ config.shop_name|default:'Interior Soft' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="upi_id" class="form-label">Shop UPI ID (for dynamic QR)</label>
+                        <input type="text" name="upi_id" id="upi_id" class="form-control" value="{{ config.upi_id|default:'' }}" placeholder="e.g. shopname@upi">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">QR Code Preview</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if config.upi_id %}
+                    <p class="small text-muted mb-3">Dynamically Generated QR Code (using UPI ID, NOTE : Do CrossCheck!)</p>
+                    <div class="bg-light p-4 d-inline-block rounded">
+                        {% load qr_code %}
+                        {% if upi_preview_url %}
+                            {% qr_from_text upi_preview_url size="L" %}
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        Please set a UPI ID to see the preview.
+                    </div>
+                {% endif %}
+                <div class="mt-3">
+                    <p class="mb-0 fw-bold">{{ config.shop_name|default:'Shop Name' }}</p>
+                    <p class="text-muted small">{{ config.upi_id|default:'No UPI ID set' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

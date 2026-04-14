@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Inventory Management</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'collection_create' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-folder-plus"></i> Add Collection
+        </a>
+        <a href="{% url 'designtype_create' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus"></i> Add New Design
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form id="stock-search-form" method="get" class="d-flex gap-2">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" id="stock-search-input" class="form-control" placeholder="Search by name, alias, or collection..." value="{{ request.GET.q|default:'' }}" autofocus>
+            </div>
+            <select name="collection" id="collection-filter" class="form-select w-auto">
+                <option value="">All Collections</option>
+                {% for col in collections %}
+                <option value="{{ col.id }}" {% if request.GET.collection == col.id|stringformat:"i" %}selected{% endif %}>{{ col.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12" id="stock-table-container">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Stock Levels</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Collection</th>
+                                <th>Design Name</th>
+                                <th>Quantity Available</th>
+                                <th>Unit</th>
+                                <th>Low Stock Threshold</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr class="{% if stock.is_low_stock %}table-danger{% endif %}">
+                                <td>{{ stock.design_type.collection.name|default:"-" }}</td>
+                                <td>{{ stock.design_type.name }}</td>
+                                <td class="fw-bold">{{ stock.quantity }}</td>
+                                <td>{{ stock.design_type.unit }}</td>
+                                <td>{{ stock.low_stock_threshold }}</td>
+                                <td>
+                                    {% if stock.is_low_stock %}
+                                        <span class="badge bg-danger">Low Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-success">In Stock</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'stock_update' stock.pk %}" class="btn btn-outline-primary">Update Stock</a>
+                                        {% if stock.design_type %}
+                                        <a href="{% url 'designtype_update' stock.design_type.pk %}" class="btn btn-outline-secondary">Edit Design</a>
+                                        <a href="{% url 'designtype_delete' stock.design_type.pk %}" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-3">No stock records found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('stock-search-input');
+        const collectionFilter = document.getElementById('collection-filter');
+        const container = document.getElementById('stock-table-container');
+        let debounceTimer;
+
+        function updateStockList() {
+            const q = searchInput.value;
+            const collection = collectionFilter.value;
+            const url = `${window.location.pathname}?q=${encodeURIComponent(q)}&collection=${collection}`;
+            
+            container.style.opacity = '0.5';
+            
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.getElementById('stock-table-container').innerHTML;
+                    container.innerHTML = newContent;
+                    container.style.opacity = '1';
+                    window.history.pushState({}, '', url);
+                });
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updateStockList, 300);
+        });
+
+        collectionFilter.addEventListener('change', updateStockList);
+        
+        // Refocus on input after load
+        searchInput.focus();
+        // Move cursor to end
+        const val = searchInput.value;
+        searchInput.value = '';
+        searchInput.value = val;
+    });
+</script>
+{% endblock %}

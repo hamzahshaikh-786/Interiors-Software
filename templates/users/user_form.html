@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_user %}Edit User{% else %}Create User{% endif %} - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% if edit_user %}Edit User: {{ edit_user.username }}{% else %}Create New User{% endif %}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="username" id="username" class="form-control" value="{{ edit_user.username|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" name="email" id="email" class="form-control" value="{{ edit_user.email|default:'' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password {% if edit_user %}(Leave blank to keep current){% endif %}</label>
+                        <input type="password" name="password" id="password" class="form-control" {% if not edit_user %}required{% endif %}>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select name="role" id="role" class="form-select" required>
+                            {% for role_code, role_name in roles %}
+                                <option value="{{ role_code }}" {% if edit_user.role == role_code %}selected{% endif %}>{{ role_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if edit_user.is_active or not edit_user %}checked{% endif %}>
+                        <label for="is_active" class="form-check-label">Is Active</label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">{% if edit_user %}Update User{% else %}Create User{% endif %}</button>
+                        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

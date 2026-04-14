@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase Entry - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">New Purchase Entry</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">General Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="purchaser" class="form-label">Purchaser</label>
+                            <div class="input-group">
+                                <select name="purchaser" id="purchaser" class="form-select select2-purchaser" required>
+                                    <option value="">Select purchaser...</option>
+                                    {% for p in purchasers %}
+                                    <option value="{{ p.id }}">{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if user.is_admin or user.is_accountant %}
+                                <a href="{% url 'purchaser_create' %}" class="btn btn-outline-secondary">Add New Purchaser</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Purchase Items</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                        <i class="bi bi-plus"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0" id="items-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Design Selection</th>
+                                    <th>Quantity</th>
+                                    <th>Material Condition</th>
+                                    <th>Colour Match</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="item-row">
+                                    <td style="min-width: 300px;">
+                                        <select name="design_type" class="form-select design-select" required>
+                                            <option value="">Search for design (Name or Alias)...</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control" step="0.01" required>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="material_condition_0" value="good" id="cond_good_0" checked>
+                                                <label class="form-check-label" for="cond_good_0">Good</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="material_condition_0" value="bad" id="cond_bad_0">
+                                                <label class="form-check-label" for="cond_bad_0">Bad</label>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="material_condition" value="good" class="hidden-cond">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="design_colour_match_0" value="match" id="match_0" checked>
+                                                <label class="form-check-label" for="match_0">Match</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="design_colour_match_0" value="unmatch" id="unmatch_0">
+                                                <label class="form-check-label" for="unmatch_0">Unmatch</label>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="design_colour_match" value="match" class="hidden-match">
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg">Submit Purchase Entry for Approval</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.select2-purchaser').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select purchaser...',
+            width: '100%'
+        });
+
+        function initDesignSelect(element) {
+            $(element).select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search for design (Name or Alias)...',
+                width: '100%',
+                ajax: {
+                    url: '{% url "design_search_ajax" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+        }
+
+        // Initialize first row
+        initDesignSelect('.design-select');
+
+        const tableBody = document.querySelector('#items-table tbody');
+        const addItemBtn = document.querySelector('#add-item');
+        let rowCount = 1;
+
+        function updateHiddenInputs(row, index) {
+            const condRadios = row.querySelectorAll(`input[type="radio"][name^="material_condition"]`);
+            const hiddenCond = row.querySelector(`.hidden-cond`);
+            condRadios.forEach(radio => {
+                radio.addEventListener('change', () => hiddenCond.value = radio.value);
+            });
+
+            const matchRadios = row.querySelectorAll(`input[type="radio"][name^="design_colour_match"]`);
+            const hiddenMatch = row.querySelector(`.hidden-match`);
+            matchRadios.forEach(radio => {
+                radio.addEventListener('change', () => hiddenMatch.value = radio.value);
+            });
+        }
+
+        updateHiddenInputs(tableBody.querySelector('.item-row'), 0);
+
+        addItemBtn.addEventListener('click', function() {
+            const firstRow = tableBody.querySelector('.item-row');
+            
+            // Destroy select2 before cloning to avoid issues
+            $(firstRow).find('.design-select').select2('destroy');
+            
+            const newRow = firstRow.cloneNode(true);
+            
+            // Re-init select2 on original row
+            initDesignSelect($(firstRow).find('.design-select'));
+
+            const index = rowCount++;
+            
+            // Update names and IDs for radios in new row
+            newRow.querySelectorAll('input[type="radio"]').forEach(radio => {
+                const parts = radio.name.split('_');
+                const baseName = parts.slice(0, -1).join('_');
+                radio.name = `${baseName}_${index}`;
+                radio.id = `${radio.id.split('_').slice(0, -1).join('_')}_${index}`;
+                const label = newRow.querySelector(`label[for="${radio.id.split('_').slice(0, -1).join('_')}_0"]`);
+                if (label) label.setAttribute('for', radio.id);
+            });
+            
+            newRow.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
+            
+            // Clear and prepare select2 for new row
+            const newSelect = $(newRow).find('.design-select');
+            newSelect.empty().append('<option value="">Search for design (Name or Alias)...</option>');
+            
+            tableBody.appendChild(newRow);
+            initDesignSelect(newSelect);
+            updateHiddenInputs(newRow, index);
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item')) {
+                const rows = tableBody.querySelectorAll('.item-row');
+                if (rows.length > 1) {
+                    e.target.closest('.item-row').remove();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

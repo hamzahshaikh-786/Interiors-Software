@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Order: {{ order.invoice_number }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        {% if user.is_delivery_person and order.delivery_partner == user %}
+            {% if order.status == 'assigned' %}
+                <a href="{% url 'order_pickup' order.pk %}" class="btn btn-sm btn-primary me-2" onclick="return confirm('Are you sure you want to pick up this order?')">Pick Order</a>
+            {% elif order.status == 'out_for_delivery' %}
+                <a href="{% url 'order_mark_delivered' order.pk %}" class="btn btn-sm btn-success me-2" onclick="return confirm('Ready to collect payment and mark as delivered?')">Collect Payment</a>
+            {% endif %}
+        {% endif %}
+        {% if user.is_admin or user.is_accountant or user.is_delivery_person %}
+        <a href="{% url 'delivery_challan' order.pk %}" target="_blank" class="btn btn-sm btn-outline-info me-2">
+            <i class="bi bi-file-earmark-text"></i> Delivery Challan
+        </a>
+        {% endif %}
+        
+        {% if user.is_admin or user.is_accountant %}
+        <a href="{% url 'order_invoice' order.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-file-earmark-pdf"></i> Download Invoice
+        </a>
+        {% endif %}
+        
+        {% if user.is_admin or user.is_warehouse_manager %}
+            {% if order.status == 'created' %}
+                <a href="{% url 'order_status_update' order.pk 'cutting' %}" class="btn btn-sm btn-primary" onclick="return confirm('Are you sure you want to start cutting for this order?')">Start Cutting</a>
+            {% elif order.status == 'cutting' %}
+                <a href="{% url 'order_status_update' order.pk 'ready' %}" class="btn btn-sm btn-success" onclick="return confirm('Mark as Cut Completed?')">Mark Ready</a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        {% if order.status == 'ready' %}
+        {% if user.is_admin or user.is_accountant %}
+        <div class="card shadow-sm mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Assign Delivery (Action Required)</h5>
+            </div>
+            <div class="card-body">
+                <form action="{% url 'order_status_update' order.pk 'assigned' %}" method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="delivery_choice" class="form-label">Delivery</label>
+                            <select name="delivery_choice" id="delivery_choice" class="form-select" required>
+                                <option value="">Select Delivery...</option>
+                                <optgroup label="Self">
+                                    {% for dp in delivery_partners %}
+                                    <option value="self:{{ dp.id }}">Self — {{ dp.username }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Porter">
+                                    {% for dp in delivery_partners %}
+                                    <option value="porter:{{ dp.id }}">Porter — {{ dp.username }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Courier">
+                                    {% for dp in delivery_partners %}
+                                    <option value="courier:{{ dp.id }}">Courier — {{ dp.username }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Delivery Man">
+                                    {% for dp in delivery_partners %}
+                                    <option value="delivery_man:{{ dp.id }}">Delivery Man — {{ dp.username }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="delivery_reference_number" class="form-label">Vehicle No / Ref No</label>
+                            <input type="text" name="delivery_reference_number" id="delivery_reference_number" class="form-control" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Assign & Notify Delivery</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted">Customer</p>
+                        <h6>{{ order.party.name }}</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted">Status</p>
+                        <h6><span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span></h6>
+                        {% if order.delivery_partner %}
+                            <div class="small text-muted">Assigned To: {{ order.delivery_partner.username }}</div>
+                            <div class="small text-muted">Method: {{ order.get_delivery_method_display }}</div>
+                            {% if order.delivery_reference_number %}
+                                <div class="small text-muted">Vehicle / Ref: {{ order.delivery_reference_number }}</div>
+                            {% endif %}
+                            {% if assigned_history %}
+                                <div class="small text-muted">Assigned At: {{ assigned_history.timestamp|date:"d M Y, h:i A" }}</div>
+                                {% if assigned_history.updated_by %}
+                                    <div class="small text-muted">Assigned By: {{ assigned_history.updated_by.username }}</div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-12">
+                        <p class="mb-1 text-muted">Delivery Address</p>
+                        <h6>{{ order.delivery_address }}</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted">Date Created</p>
+                        <h6>{{ order.created_at|date:"d M Y, h:i A" }}</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1 text-muted">Created By</p>
+                        <h6>{{ order.created_by.username }}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                {% if user.is_admin or user.is_accountant %}
+                                <th>Price/Meter</th>
+                                <th>Total</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>{{ item.design_type.name }}</td>
+                                <td>{{ item.quantity }} {{ item.design_type.unit }}</td>
+                                {% if user.is_admin or user.is_accountant %}
+                                <td>₹{{ item.price_per_meter }}</td>
+                                <td>₹{{ item.total_price }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if user.is_admin or user.is_accountant %}
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="3" class="text-end">Subtotal:</th>
+                                <th>₹{{ order.total_amount }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-end">GST:</th>
+                                <th>₹{{ order.gst_amount }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-end">Grand Total:</th>
+                                <th>₹{{ order.grand_total }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-end">Balance Due:</th>
+                                <th class="text-danger">₹{{ order.balance_amount }}</th>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_admin or user.is_accountant %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Payments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Mode</th>
+                                <th>Ref ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in order.payments.all %}
+                            <tr>
+                                <td>{{ payment.timestamp|date:"d M Y" }}</td>
+                                <td>₹{{ payment.amount }}</td>
+                                <td>{{ payment.get_mode_display }}</td>
+                                <td>{{ payment.transaction_id|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3">No payments recorded</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if order.balance_amount > 0 and user.is_accountant or user.is_admin %}
+            <div class="card-footer bg-white text-end">
+                <a href="{% url 'payment_add' order.pk %}" class="btn btn-sm btn-primary">Add Payment</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        {% if user.is_admin or user.is_accountant %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Status History</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for history in order.status_history.all|dictsortreversed:"timestamp" %}
+                    <li class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ history.get_status_display }}</strong>
+                            <small class="text-muted">{{ history.timestamp|date:"d M Y, h:i A" }}</small>
+                        </div>
+                        <p class="mb-0 small text-muted">By: {{ history.updated_by.username }}</p>
+                        {% if history.notes %}
+                        <p class="mb-0 small fst-italic">{{ history.notes }}</p>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

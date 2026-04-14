@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Approve Purchase - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Review Purchase: {{ purchase.id }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Purchase Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted">Purchaser:</div>
+                    <div class="col-sm-8 fw-bold">{{ purchase.purchaser.name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted">Created By:</div>
+                    <div class="col-sm-8">{{ purchase.created_by.username }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted">Date Created:</div>
+                    <div class="col-sm-8">{{ purchase.created_at|date:"d M Y, h:i A" }}</div>
+                </div>
+                
+                <hr>
+                
+                <h6 class="mb-3">Purchase Items</h6>
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    {% if purchase.status == 'pending' %}
+                                    <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
+                                    {% endif %}
+                                    <th>Design</th>
+                                    <th>Quantity</th>
+                                    <th>Condition</th>
+                                    <th>Colour Match</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in purchase.items.all %}
+                                <tr>
+                                    {% if purchase.status == 'pending' %}
+                                    <td>
+                                        <input type="checkbox" name="approved_items" value="{{ item.id }}" class="item-checkbox" checked>
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    </td>
+                                    {% endif %}
+                                    <td>{{ item.design_type.name }}</td>
+                                    <td>{{ item.quantity }} {{ item.design_type.unit }}</td>
+                                    <td>
+                                        {% if item.material_condition == 'good' %}
+                                            <span class="badge bg-success">Good</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Bad</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.design_colour_match == 'match' %}
+                                            <span class="badge bg-success">Match</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Unmatch</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif item.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if purchase.status == 'pending' %}
+                    <div class="mb-3 mt-3">
+                        <label for="reference_bill_number" class="form-label">Reference Bill Number (Required for Approval)</label>
+                        <input type="text" name="reference_bill_number" id="reference_bill_number" class="form-control" placeholder="Enter Reference Bill No" required>
+                    </div>
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-info-circle me-1"></i> Checked items will be <strong>Approved</strong> and stock updated. Unchecked items will be <strong>Rejected</strong>.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="process_items" class="btn btn-primary px-4">Process Selection</button>
+                        <a href="{% url 'purchase_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mt-3">
+                        This purchase entry was processed on {{ purchase.updated_at|date:"d M Y" }} by {{ purchase.approved_by.username }}.
+                    </div>
+                    <a href="{% url 'purchase_list' %}" class="btn btn-outline-secondary px-4">Back to List</a>
+                    {% endif %}
+                </form>
+
+<script>
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+</script>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

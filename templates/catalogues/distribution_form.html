@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue Distribution - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Catalogue Distribution</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">General Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="party" class="form-label">Party / Shop Name</label>
+                            <select name="party" id="party" class="form-select select2-party" required>
+                                <option value="">Select shop...</option>
+                                {% for p in parties %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="notes" class="form-label">Notes</label>
+                            <input type="text" name="notes" id="notes" class="form-control" placeholder="Optional notes">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Catalogue Items to Distribute</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                        <i class="bi bi-plus"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0" id="items-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Catalogue Type</th>
+                                    <th>Quantity to Assign</th>
+                                    <th>Available Stock</th>
+                                    <th style="width: 50px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="item-row">
+                                    <td>
+                                        <select name="catalogue_type" class="form-select catalogue-select" required>
+                                            <option value="">Select catalogue type...</option>
+                                            {% for ct in catalogue_types %}
+                                            <option value="{{ ct.id }}" data-stock="{{ ct.inventory.quantity }}">{{ ct.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control" min="1" required>
+                                    </td>
+                                    <td>
+                                        <span class="stock-badge badge bg-info">-</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-success btn-lg">Submit Distribution</button>
+                <a href="{% url 'catalogue_distribution_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.select2-party').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select shop...',
+            width: '100%'
+        });
+
+        const tableBody = document.querySelector('#items-table tbody');
+        const addItemBtn = document.querySelector('#add-item');
+
+        function updateStockBadge(select) {
+            const row = select.closest('.item-row');
+            const badge = row.querySelector('.stock-badge');
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption && selectedOption.dataset.stock) {
+                badge.textContent = selectedOption.dataset.stock;
+            } else {
+                badge.textContent = '-';
+            }
+        }
+
+        // Initialize first row
+        tableBody.querySelector('.catalogue-select').addEventListener('change', function() {
+            updateStockBadge(this);
+        });
+
+        addItemBtn.addEventListener('click', function() {
+            const firstRow = tableBody.querySelector('.item-row');
+            const newRow = firstRow.cloneNode(true);
+            newRow.querySelectorAll('input').forEach(input => input.value = '');
+            newRow.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+                select.addEventListener('change', function() {
+                    updateStockBadge(this);
+                });
+            });
+            newRow.querySelector('.stock-badge').textContent = '-';
+            tableBody.appendChild(newRow);
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item')) {
+                if (tableBody.querySelectorAll('.item-row').length > 1) {
+                    e.target.closest('.item-row').remove();
+                } else {
+                    alert('At least one item is required.');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

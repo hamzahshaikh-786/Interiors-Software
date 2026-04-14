@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Import Parties - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Bulk Import Parties</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">Select CSV or Excel file</label>
+                        <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv, .xlsx, .xls" required>
+                        <div class="form-text mt-3">
+                            <h6>Required CSV Format:</h6>
+                            <p class="small text-muted mb-2">The file must contain a <strong>name</strong> column. Column names are case-insensitive and can have extra spaces.</p>
+                            <table class="table table-sm table-bordered small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>name</th>
+                                        <th>phone</th>
+                                        <th>email</th>
+                                        <th>address</th>
+                                        <th>gst_number</th>
+                                        <th>credit_limit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>ABC Textiles</td>
+                                        <td>9876543210</td>
+                                        <td>abc@example.com</td>
+                                        <td>123 Main St, Delhi</td>
+                                        <td>07AAAAA0000A1Z5</td>
+                                        <td>50000</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Start Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

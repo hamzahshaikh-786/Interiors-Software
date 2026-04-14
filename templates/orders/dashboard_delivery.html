@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Dashboard - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Delivery Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">My Assignments</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Party</th>
+                                <th>Address</th>
+                                <th>Amount to Collect</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ order.invoice_number }}</td>
+                                <td>{{ order.party.name }} <br> <small>{{ order.party.phone }}</small></td>
+                                <td>
+                                    {{ order.delivery_address }} <br>
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ order.delivery_address|urlencode }}" target="_blank" class="btn btn-sm btn-link p-0">
+                                        <i class="bi bi-geo-alt"></i> Open in Maps
+                                    </a>
+                                </td>
+                                <td>₹{{ order.balance_amount }}</td>
+                                <td>
+                                    <span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span>
+                                    <div class="small text-muted">Method: {{ order.get_delivery_method_display }}</div>
+                                    {% if order.delivery_reference_number %}
+                                        <div class="small text-muted">Vehicle / Ref: {{ order.delivery_reference_number }}</div>
+                                    {% endif %}
+                                    {% if order.assigned_at %}
+                                        <div class="small text-muted">Assigned: {{ order.assigned_at|date:"d M Y, h:i A" }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if order.status == 'assigned' %}
+                                            <a href="{% url 'order_pickup' order.pk %}" class="btn btn-primary" onclick="return confirm('Are you sure you want to pick up this order?')">Pick Order</a>
+                                        {% elif order.status == 'out_for_delivery' %}
+                                            <a href="{% url 'order_mark_delivered' order.pk %}" class="btn btn-success" onclick="return confirm('Ready to collect payment and mark as delivered?')">Mark Delivered</a>
+                                        {% endif %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-info">Details</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-3">No active assignments found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

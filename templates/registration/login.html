@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Interior Soft{% endblock %}
+
+{% block content %}
+<style>
+    .login-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+    @media (min-width: 769px) {
+        body, html {
+            overflow: hidden !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+    }
+    .login-left {
+        flex: 1;
+        background: #0b0f16;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        text-align: center;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    .login-left::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(1200px 600px at 20% 20%, rgba(52,152,219,0.25), transparent 60%),
+                    radial-gradient(900px 600px at 80% 60%, rgba(155,89,182,0.22), transparent 60%),
+                    linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.65));
+        pointer-events: none;
+        z-index: 1;
+    }
+    .login-left .login-blobs {
+        position: absolute;
+        inset: -20%;
+        z-index: 0;
+        pointer-events: none;
+        filter: blur(60px);
+        opacity: 0.9;
+    }
+    .login-left .login-blob {
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        border-radius: 999px;
+        mix-blend-mode: screen;
+        opacity: 0.65;
+    }
+    .login-left .login-blob.blob-1 {
+        left: 5%;
+        top: 10%;
+        background: radial-gradient(circle at 30% 30%, rgba(46,204,113,0.95), transparent 60%),
+                    radial-gradient(circle at 70% 70%, rgba(52,152,219,0.9), transparent 60%);
+        animation: blobFloat1 14s ease-in-out infinite alternate;
+    }
+    .login-left .login-blob.blob-2 {
+        right: 8%;
+        top: 25%;
+        background: radial-gradient(circle at 30% 30%, rgba(241,196,15,0.95), transparent 62%),
+                    radial-gradient(circle at 70% 70%, rgba(231,76,60,0.9), transparent 60%);
+        animation: blobFloat2 16s ease-in-out infinite alternate;
+    }
+    .login-left .login-blob.blob-3 {
+        left: 18%;
+        bottom: 8%;
+        background: radial-gradient(circle at 35% 35%, rgba(155,89,182,0.95), transparent 62%),
+                    radial-gradient(circle at 75% 75%, rgba(52,152,219,0.85), transparent 60%);
+        animation: blobFloat3 18s ease-in-out infinite alternate;
+    }
+    .login-left .login-blob.blob-4 {
+        right: 18%;
+        bottom: 12%;
+        background: radial-gradient(circle at 35% 35%, rgba(52,73,94,0.95), transparent 62%),
+                    radial-gradient(circle at 75% 75%, rgba(46,204,113,0.75), transparent 60%);
+        animation: blobFloat4 20s ease-in-out infinite alternate;
+    }
+    @keyframes blobFloat1 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(90px, 60px, 0) scale(1.08) rotate(10deg); }
+    }
+    @keyframes blobFloat2 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(-80px, 70px, 0) scale(1.1) rotate(-12deg); }
+    }
+    @keyframes blobFloat3 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(70px, -60px, 0) scale(1.06) rotate(14deg); }
+    }
+    @keyframes blobFloat4 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(-70px, -50px, 0) scale(1.05) rotate(-10deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .login-left .login-blob { animation: none !important; }
+        .typing-effect { animation: none !important; border-right: none; width: auto; }
+    }
+    .login-right {
+        flex: 1;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        height: 100%;
+    }
+    .typing-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 4rem;
+        position: relative;
+        z-index: 2;
+    }
+    .typing-effect {
+        font-size: 3rem;
+        font-weight: bold;
+        border-right: 3px solid white;
+        white-space: nowrap;
+        overflow: hidden;
+        width: 0;
+        animation: typing 4s steps(20) infinite alternate, blink-caret .75s step-end infinite;
+        position: relative;
+        z-index: 2;
+    }
+    @keyframes typing {
+        0% { width: 0 }
+        50%, 100% { width: 100% }
+    }
+    @keyframes blink-caret {
+        from, to { border-color: transparent }
+        50% { border-color: white; }
+    }
+    @media (max-width: 768px) {
+        .login-container {
+            flex-direction: column;
+            position: relative;
+            height: auto;
+            overflow: visible;
+        }
+        .login-left {
+            padding: 60px 20px;
+            min-height: 38vh;
+        }
+        .login-right {
+            padding: 40px 20px;
+        }
+    }
+</style>
+
+<div class="login-container">
+     <div class="login-left">
+        <div class="login-blobs" aria-hidden="true">
+            <div class="login-blob blob-1"></div>
+            <div class="login-blob blob-2"></div>
+            <div class="login-blob blob-3"></div>
+            <div class="login-blob blob-4"></div>
+        </div>
+         <div class="typing-container">
+             <div class="typing-effect">Interior Soft ERP</div>
+         </div>
+         <p class="lead mt-3" style="position: relative; z-index: 2;">The ultimate solution for cloth wholesalers.</p>
+        <div class="mt-4">
+            <i class="bi bi-shop profile-icon" style="font-size: 5rem; color: rgba(255,255,255,0.2);"></i>
+        </div>
+    </div>
+    <div class="login-right">
+        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; max-width: 400px;">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock profile-icon" style="font-size: 3rem;"></i>
+                <h3 class="mt-2 fw-bold">Login</h3>
+                <p class="text-muted">Enter your credentials</p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg" style="border-radius: 10px;">
+                        Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

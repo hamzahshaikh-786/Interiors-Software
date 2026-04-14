@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Purchasers - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Purchaser Master List</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'purchaser_create' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Purchaser
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Purchaser Name</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Purchases Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchaser in purchasers %}
+                    <tr>
+                        <td>{{ purchaser.name }}</td>
+                        <td>{{ purchaser.phone|default:"-" }}</td>
+                        <td>{{ purchaser.address|default:"-" }}</td>
+                        <td>{{ purchaser.purchases.count }}</td>
+                        <td>
+                            <a href="{% url 'purchaser_update' purchaser.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'purchaser_delete' purchaser.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-3">No purchasers found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'order_list' %}" class="text-decoration-none">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Orders</h6>
+                            <h2 class="mb-0">{{ total_orders }}</h2>
+                        </div>
+                        <i class="bi bi-cart-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'order_list' %}?status=created" class="text-decoration-none">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Pending Orders</h6>
+                            <h2 class="mb-0">{{ pending_orders }}</h2>
+                        </div>
+                        <i class="bi bi-clock-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'party_list' %}" class="text-decoration-none">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Parties</h6>
+                            <h2 class="mb-0">{{ total_parties }}</h2>
+                        </div>
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'ledger_list' %}" class="text-decoration-none">
+            <div class="card bg-danger text-white h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 small fw-bold">Pending Overdues</h6>
+                            <h3 class="mb-0">₹{{ overdue_amount }}</h3>
+                        </div>
+                        <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-4">
+        <a href="{% url 'ledger_list' %}" class="text-decoration-none">
+            <div class="card bg-info text-white h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 small fw-bold">Advance from Clients</h6>
+                            <h3 class="mb-0">₹{{ advance_amount }}</h3>
+                        </div>
+                        <i class="bi bi-piggy-bank-fill fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Orders</h5>
+                <a href="{% url 'order_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Party</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="{% url 'order_detail' order.pk %}">{{ order.invoice_number }}</a></td>
+                                <td>{{ order.party.name }}</td>
+                                <td>₹{{ order.grand_total }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-3">No orders found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Top Customers</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for customer in top_customers %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold small text-truncate" style="max-width: 150px;">{{ customer.party.name }}</div>
+                            <small class="text-muted">Total Sales: ₹{{ customer.total_debit }}</small>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center py-3">No data available</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Low Stock Alerts</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for stock in low_stock_items %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{% url 'stock_list' %}" class="text-decoration-none small text-danger fw-bold">
+                            {{ stock.design_type.name }}
+                        </a>
+                        <span class="badge bg-danger rounded-pill">{{ stock.quantity }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center py-3">All items in stock</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

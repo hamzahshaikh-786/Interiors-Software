@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Ledger Statement - {{ party.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Ledger Statement: {{ party.name }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="window.print()">
+            <i class="bi bi-printer"></i> Print Statement
+        </button>
+        <a href="https://wa.me/{{ party.phone|slice:'-10:' }}?text=Hello%20{{ party.name }},%20your%20current%20outstanding%20balance%20is%20INR%20{{ balance.current_balance }}.%20Please%20pay%20at%20earliest." 
+           target="_blank" class="btn btn-sm btn-success whatsapp-reminder" 
+           data-balance="{{ balance.current_balance }}">
+            <i class="bi bi-whatsapp"></i> Send Balance Reminder
+        </a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const whatsappBtn = document.querySelector('.whatsapp-reminder');
+        if (whatsappBtn) {
+            whatsappBtn.addEventListener('click', function(e) {
+                const balance = parseFloat(this.getAttribute('data-balance'));
+                if (balance <= 0) {
+                    e.preventDefault();
+                    alert('This customer has no outstanding due. Current balance is settled or in advance.');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 border-start border-4 {% if balance.current_balance > 0 %}border-danger{% elif balance.current_balance < 0 %}border-success{% else %}border-secondary{% endif %}">
+            <div class="card-body">
+                <p class="text-muted mb-1 small text-uppercase fw-bold">Current Status</p>
+                {% if balance.current_balance > 0 %}
+                    <h3 class="text-danger mb-0">-₹{{ balance.current_balance }} <small class="fs-6">(Payable by Party)</small></h3>
+                {% elif balance.current_balance < 0 %}
+                    <h3 class="text-success mb-0">+₹{{ balance.current_balance|stringformat:".2f"|slice:"1:" }} <small class="fs-6">(Paid Extra/Advance)</small></h3>
+                {% else %}
+                    <h3 class="text-secondary mb-0">₹0.00 <small class="fs-6">(Settled)</small></h3>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 border-start border-4 border-primary">
+            <div class="card-body">
+                <p class="text-muted mb-1 small text-uppercase fw-bold">Total Sales</p>
+                <h3 class="text-primary mb-0">₹{{ balance.total_debit }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 border-start border-4 border-success">
+            <div class="card-body">
+                <p class="text-muted mb-1 small text-uppercase fw-bold">Total Payments</p>
+                <h3 class="text-success mb-0">₹{{ balance.total_credit }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Transaction History</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Ref Invoice</th>
+                        <th class="text-success">Credit (+)</th>
+                        <th class="text-danger">Debit (-)</th>
+                        <th>Running Balance Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in ledger_entries %}
+                    <tr>
+                        <td>{{ entry.transaction.timestamp|date:"d M Y" }}</td>
+                        <td>{{ entry.transaction.description }}</td>
+                        <td>{{ entry.transaction.order.invoice_number|default:"-" }}</td>
+                        <td class="text-success">{% if entry.transaction.credit > 0 %}+₹{{ entry.transaction.credit }}{% elif entry.transaction.credit == 0 %}₹0.00{% else %}-{% endif %}</td>
+                        <td class="text-danger">{% if entry.transaction.debit > 0 %}-₹{{ entry.transaction.debit }}{% elif entry.transaction.debit == 0 %}₹0.00{% else %}-{% endif %}</td>
+                        <td class="fw-bold {% if entry.running_balance > 0 %}text-danger{% elif entry.running_balance < 0 %}text-success{% endif %}">
+                            {% if entry.running_balance > 0 %}-₹{{ entry.running_balance }}{% elif entry.running_balance < 0 %}+₹{{ entry.running_balance|stringformat:".2f"|slice:"1:" }}{% else %}₹0.00{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3">No transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Catalogue Type - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Delete Catalogue Type</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete the catalogue type <strong>{{ object.name }}</strong>?</p>
+                <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill"></i> This will also delete its inventory tracking and history.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                        <a href="{% url 'catalogue_type_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

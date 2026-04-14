@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Warehouse Dashboard - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Warehouse Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Pending Cutting Tasks</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Party</th>
+                                <th>Items</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in cutting_tasks %}
+                            <tr>
+                                <td>{{ order.invoice_number }}</td>
+                                <td>{{ order.party.name }}</td>
+                                <td>
+                                    <ul class="list-unstyled mb-0 small">
+                                        {% for item in order.items.all %}
+                                        <li>{{ item.design_type.name }}: <strong>{{ item.quantity }} {{ item.design_type.unit }}</strong></li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td><span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if order.status == 'created' %}
+                                            <a href="{% url 'order_status_update' order.pk 'cutting' %}" class="btn btn-primary" onclick="return confirm('Start cutting for this order?')">Start Cutting</a>
+                                        {% elif order.status == 'cutting' %}
+                                            <a href="{% url 'order_status_update' order.pk 'ready' %}" class="btn btn-success" onclick="return confirm('Mark as Cut Completed and Ready?')">Mark Ready</a>
+                                        {% endif %}
+                                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-info">Details</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">No pending cutting tasks</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_admin %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Ready for Dispatch (Assign Delivery)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Party</th>
+                                <th>Address</th>
+                                <th>Assign To</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in ready_orders %}
+                            <tr>
+                                <form method="post" action="{% url 'order_status_update' order.pk 'assigned' %}">
+                                    {% csrf_token %}
+                                    <td>{{ order.invoice_number }}</td>
+                                    <td>{{ order.party.name }}</td>
+                                    <td>{{ order.delivery_address }}</td>
+                                    <td>
+                                        <select name="delivery_choice" class="form-select form-select-sm" required>
+                                            <option value="">Select Delivery...</option>
+                                            <optgroup label="Self">
+                                                {% for dp in delivery_partners %}
+                                                <option value="self:{{ dp.id }}">Self — {{ dp.username }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="Porter">
+                                                {% for dp in delivery_partners %}
+                                                <option value="porter:{{ dp.id }}">Porter — {{ dp.username }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="Courier">
+                                                {% for dp in delivery_partners %}
+                                                <option value="courier:{{ dp.id }}">Courier — {{ dp.username }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="Delivery Man">
+                                                {% for dp in delivery_partners %}
+                                                <option value="delivery_man:{{ dp.id }}">Delivery Man — {{ dp.username }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Assign and dispatch?')">Assign & Dispatch</button>
+                                    </td>
+                                </form>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">No orders ready for dispatch</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

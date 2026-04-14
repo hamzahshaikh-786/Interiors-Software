@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Collections - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Product Collections</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'collection_create' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-folder-plus"></i> Add Collection
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Collection Name</th>
+                        <th>Description</th>
+                        <th>Designs Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for collection in collections %}
+                    <tr>
+                        <td>{{ collection.name }}</td>
+                        <td>{{ collection.description|default:"-" }}</td>
+                        <td>{{ collection.designs.count }}</td>
+                        <td>
+                            <a href="{% url 'stock_list' %}?q={{ collection.name }}" class="btn btn-sm btn-outline-info">View Designs</a>
+                            <a href="{% url 'designtype_create' %}?collection={{ collection.id }}" class="btn btn-sm btn-outline-success">Add Design</a>
+                            <a href="{% url 'collection_update' collection.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'collection_delete' collection.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this collection and all its designs?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-3">No collections found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Create Visit - Catalogue Tracking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Create Catalogue Visit</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Visit Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="visit_date" class="form-label">Visit Date</label>
+                            <input type="date" name="visit_date" id="visit_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="party" class="form-label">Party / Shop Name</label>
+                            <select name="party" id="party" class="form-select select2-party" required>
+                                <option value="">Select shop...</option>
+                                {% for p in parties %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4" id="catalogue-checklist-card" style="display: none;">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Catalogue Checklist (Presence at Shop)</h5>
+                    <p class="small text-muted mb-0">Check the catalogues that are physically present. Unchecked ones will be marked as missing.</p>
+                </div>
+                <div class="card-body">
+                    <div id="catalogue-list" class="row">
+                        <!-- AJAX content -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Capture Evidence (Camera Only)</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <video id="video" width="100%" max-width="400" autoplay playsinline class="rounded bg-dark mb-2" style="display:none;"></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <img id="photo-preview" class="img-fluid rounded mb-2" style="display:none;">
+                        <input type="hidden" name="photo_data" id="photo_data">
+                    </div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" id="start-camera" class="btn btn-outline-primary">
+                            <i class="bi bi-camera"></i> Start Camera
+                        </button>
+                        <button type="button" id="capture-photo" class="btn btn-primary" style="display:none;">
+                            <i class="bi bi-camera-fill"></i> Capture Photo
+                        </button>
+                        <button type="button" id="retake-photo" class="btn btn-outline-secondary" style="display:none;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Retake
+                        </button>
+                    </div>
+                    <div class="mt-2 text-danger small" id="camera-error"></div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <label for="notes" class="form-label">Visit Notes</label>
+                    <textarea name="notes" id="notes" class="form-control" rows="3" placeholder="Any observation..."></textarea>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg">Submit Visit Report</button>
+                <a href="{% url 'catalogue_visit_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.select2-party').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select shop...',
+            width: '100%'
+        });
+
+        const partySelect = document.querySelector('#party');
+        const checklistCard = document.querySelector('#catalogue-checklist-card');
+        const catalogueList = document.querySelector('#catalogue-list');
+
+        partySelect.addEventListener('change', function() {
+            const partyId = this.value;
+            if (partyId) {
+                fetch(`/catalogues/ajax/assigned-catalogues/${partyId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        catalogueList.innerHTML = '';
+                        if (data.catalogues.length > 0) {
+                            data.catalogues.forEach(c => {
+                                const col = document.createElement('div');
+                                col.className = 'col-md-4 mb-3';
+                                col.innerHTML = `
+                                    <div class="form-check card p-3 h-100">
+                                        <input class="form-check-input" type="checkbox" name="present_catalogues" value="${c.catalogue_type}" id="cat_${c.catalogue_type}" checked>
+                                        <label class="form-check-label fw-bold" for="cat_${c.catalogue_type}">
+                                            ${c.catalogue_type__name}
+                                        </label>
+                                        <div class="small text-muted mt-1">Total Distributed: ${c.total} units</div>
+                                    </div>
+                                `;
+                                catalogueList.appendChild(col);
+                            });
+                            checklistCard.style.display = 'block';
+                        } else {
+                            catalogueList.innerHTML = '<div class="col-12 text-center text-muted">No catalogues assigned to this shop yet.</div>';
+                            checklistCard.style.display = 'block';
+                        }
+                    });
+            } else {
+                checklistCard.style.display = 'none';
+            }
+        });
+
+        // Camera logic
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photoPreview = document.getElementById('photo-preview');
+        const photoDataInput = document.getElementById('photo_data');
+        const startBtn = document.getElementById('start-camera');
+        const captureBtn = document.getElementById('capture-photo');
+        const retakeBtn = document.getElementById('retake-photo');
+        const errorMsg = document.getElementById('camera-error');
+
+        let stream = null;
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                startBtn.style.display = 'none';
+                captureBtn.style.display = 'inline-block';
+                photoPreview.style.display = 'none';
+            } catch (err) {
+                console.error("Camera error:", err);
+                errorMsg.textContent = "Unable to access camera. Please ensure permissions are granted.";
+            }
+        });
+
+        captureBtn.addEventListener('click', () => {
+            const width = video.videoWidth;
+            const height = video.videoHeight;
+            canvas.width = 640; // Low resolution for optimization
+            canvas.height = (640 / width) * height;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Compression 0.6
+            photoDataInput.value = dataUrl;
+            
+            photoPreview.src = dataUrl;
+            photoPreview.style.display = 'block';
+            video.style.display = 'none';
+            captureBtn.style.display = 'none';
+            retakeBtn.style.display = 'inline-block';
+            
+            // Stop stream
+            stream.getTracks().forEach(track => track.stop());
+        });
+
+        retakeBtn.addEventListener('click', () => {
+            startBtn.click();
+            retakeBtn.style.display = 'none';
+            photoDataInput.value = '';
+        });
+    });
+</script>
+{% endblock %}

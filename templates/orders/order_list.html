@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - Interior Soft{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Orders</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'order_create' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus"></i> Create New Order
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="btn-group btn-group-sm">
+            <a href="{% url 'order_list' %}" class="btn btn-outline-secondary {% if not request.GET.status %}active{% endif %}">All</a>
+            <a href="{% url 'order_list' %}?status=created" class="btn btn-outline-secondary {% if request.GET.status == 'created' %}active{% endif %}">Created</a>
+            <a href="{% url 'order_list' %}?status=cutting" class="btn btn-outline-secondary {% if request.GET.status == 'cutting' %}active{% endif %}">Cutting</a>
+            <a href="{% url 'order_list' %}?status=ready" class="btn btn-outline-secondary {% if request.GET.status == 'ready' %}active{% endif %}">Ready</a>
+            <a href="{% url 'order_list' %}?status=assigned" class="btn btn-outline-secondary {% if request.GET.status == 'assigned' %}active{% endif %}">Assigned</a>
+            <a href="{% url 'order_list' %}?status=out_for_delivery" class="btn btn-outline-secondary {% if request.GET.status == 'out_for_delivery' %}active{% endif %}">Out for Delivery</a>
+            <a href="{% url 'order_list' %}?status=delivered" class="btn btn-outline-secondary {% if request.GET.status == 'delivered' %}active{% endif %}">Delivered</a>
+            <a href="{% url 'order_list' %}?status=paid" class="btn btn-outline-secondary {% if request.GET.status == 'paid' %}active{% endif %}">Paid</a>
+        </div>
+        <form id="filter-form" class="d-flex align-items-center gap-2">
+            {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+            <input type="date" name="start_date" id="start_date" class="form-control form-control-sm" value="{{ request.GET.start_date }}" placeholder="Start Date">
+            <span>to</span>
+            <input type="date" name="end_date" id="end_date" class="form-control form-control-sm" value="{{ request.GET.end_date }}" placeholder="End Date">
+        </form>
+    </div>
+    <div class="card-body p-0" id="order-table-container">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Party</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.invoice_number }}</td>
+                        <td>{{ order.party.name }}</td>
+                        <td>₹{{ order.grand_total }}</td>
+                        <td>
+                            <span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span>
+                            {% if order.delivery_partner %}
+                                <div class="small text-muted">To: {{ order.delivery_partner.username }}</div>
+                                <div class="small text-muted">Method: {{ order.get_delivery_method_display }}</div>
+                                {% if order.delivery_reference_number %}
+                                    <div class="small text-muted">Vehicle / Ref: {{ order.delivery_reference_number }}</div>
+                                {% endif %}
+                                {% if order.assigned_at %}
+                                    <div class="small text-muted">Assigned: {{ order.assigned_at|date:"d M Y, h:i A" }}</div>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>{{ order.created_at|date:"d M Y" }}</td>
+                        <td>
+                            <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-info">Details</a>
+                            <a href="{% url 'order_invoice' order.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-3">No orders found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        const filterForm = $('#filter-form');
+        const startDate = $('#start_date');
+        const endDate = $('#end_date');
+        const container = $('#order-table-container');
+
+        function updateList() {
+            const formData = filterForm.serialize();
+            const url = window.location.pathname + '?' + formData;
+            
+            // Show loading state
+            container.css('opacity', '0.5');
+            
+            $.get(url, function(data) {
+                const newTable = $(data).find('#order-table-container').html();
+                container.html(newTable);
+                container.css('opacity', '1');
+                
+                // Update URL without reload
+                window.history.pushState({}, '', url);
+            });
+        }
+
+        startDate.on('change', updateList);
+        endDate.on('change', updateList);
+    });
+</script>
+{% endblock %}
