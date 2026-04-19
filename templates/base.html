@@ -383,19 +383,24 @@
                         <ul class="nav flex-column">
                             {% if user.is_admin or user.is_accountant %}
                             <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %} d-flex justify-content-between align-items-center" href="{% url 'dashboard' %}">
-                                <span>Dashboard</span>
-                                <i class="bi bi-speedometer2 small"></i>
-                            </a>
-                        </li>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %} d-flex justify-content-between align-items-center" href="{% url 'dashboard' %}">
+                                    <span class="d-flex align-items-center">
+                                        <i class="bi bi-speedometer2 me-2"></i>
+                                        Dashboard
+                                    </span>
+                                </a>
+                            </li>
                             {% endif %}
 
                         <!-- Sales & CRM -->
                         {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
                         <li class="nav-item has-submenu {% if '/orders/' in request.path or '/parties/' in request.path and '/vendors/' not in request.path %}active-section{% endif %}">
                             <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
-                                <span>Sales & CRM</span>
-                                <i class="bi bi-people small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-people me-2"></i>
+                                    Sales & CRM
+                                </span>
+                                <i class="bi bi-chevron-down small transition-arrow"></i>
                             </a>
                             <ul class="submenu list-unstyled">
                                 <li>
@@ -418,8 +423,11 @@
                         {% if user.is_admin or user.is_accountant or user.is_warehouse_manager or user.is_cutter %}
                         <li class="nav-item has-submenu {% if '/inventory/' in request.path or '/warehouse/' in request.path or '/cutter/' in request.path %}active-section{% endif %}">
                             <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
-                                <span>Inventory & Logistics</span>
-                                <i class="bi bi-box small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-box me-2"></i>
+                                    Inventory & Logistics
+                                </span>
+                                <i class="bi bi-chevron-down small transition-arrow"></i>
                             </a>
                             <ul class="submenu list-unstyled">
                                 {% if user.is_admin or user.is_accountant %}
@@ -458,8 +466,11 @@
                             {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
                             <li class="nav-item has-submenu {% if '/catalogues/' in request.path or '/vendors/' in request.path %}active-section{% endif %}">
                                 <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
-                                <span>Catalogue Management</span>
-                                <i class="bi bi-journal-bookmark small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-journal-bookmark me-2"></i>
+                                    Catalogue Management
+                                </span>
+                                <i class="bi bi-chevron-down small transition-arrow"></i>
                             </a>
                                 <ul class="submenu list-unstyled">
                                     <li>
@@ -500,8 +511,11 @@
                         {% if user.is_admin or user.is_accountant %}
                         <li class="nav-item has-submenu {% if '/ledger/' in request.path or '/cheques/' in request.path or '/analytics/' in request.path or '/daybook/' in request.path %}active-section{% endif %}">
                             <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
-                                <span>Accounts & Finance</span>
-                                <i class="bi bi-wallet2 small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-wallet2 me-2"></i>
+                                    Accounts & Finance
+                                </span>
+                                <i class="bi bi-chevron-down small transition-arrow"></i>
                             </a>
                             <ul class="submenu list-unstyled">
                                 <li>
@@ -536,8 +550,11 @@
                         {% if user.is_admin or user.is_superadmin %}
                         <li class="nav-item has-submenu {% if '/shop-config/' in request.path or '/users/' in request.path %}active-section{% endif %}">
                             <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
-                                <span>System</span>
-                                <i class="bi bi-gear small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-gear me-2"></i>
+                                    System
+                                </span>
+                                <i class="bi bi-chevron-down small transition-arrow"></i>
                             </a>
                             <ul class="submenu list-unstyled">
                                 {% if user.is_admin %}
@@ -563,8 +580,10 @@
                         {% if user.is_delivery_person %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'delivery_dashboard' %}active{% endif %} d-flex justify-content-between align-items-center" href="{% url 'delivery_dashboard' %}">
-                                <span>Delivery Dashboard</span>
-                                <i class="bi bi-geo-alt small"></i>
+                                <span class="d-flex align-items-center">
+                                    <i class="bi bi-geo-alt me-2"></i>
+                                    Delivery Dashboard
+                                </span>
                             </a>
                         </li>
                         {% endif %}
