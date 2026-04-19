@@ -1,17 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Parties - Interior Soft{% endblock %}
+{% block title %}{% if is_vendor_list %}Vendors{% else %}Parties{% endif %} - Interior Soft{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Parties (Clients)</h1>
+    <h1 class="h2">{% if is_vendor_list %}Catalogue Vendors{% else %}Parties (Clients){% endif %}</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        {% if not is_vendor_list %}
         <a href="{% url 'party_import' %}" class="btn btn-sm btn-outline-secondary me-2">
             <i class="bi bi-file-earmark-arrow-up"></i> Bulk Import
         </a>
         <a href="{% url 'party_add' %}" class="btn btn-sm btn-primary">
             <i class="bi bi-plus"></i> Add New Party
         </a>
+        {% else %}
+        <a href="{% url 'vendor_add' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus"></i> Add New Vendor
+        </a>
+        {% endif %}
     </div>
 </div>
 
@@ -21,7 +27,7 @@
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name or phone..." value="{{ request.GET.q }}" autofocus>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name, phone or alias..." value="{{ request.GET.q }}" autofocus>
                 </div>
             </div>
         </form>

@@ -48,14 +48,14 @@
 
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Capture Evidence (Camera Only)</h5>
+                    <h5 class="mb-0">Capture Evidence (Camera Mandatory)</h5>
                 </div>
                 <div class="card-body text-center">
                     <div class="mb-3">
                         <video id="video" width="100%" max-width="400" autoplay playsinline class="rounded bg-dark mb-2" style="display:none;"></video>
                         <canvas id="canvas" style="display:none;"></canvas>
                         <img id="photo-preview" class="img-fluid rounded mb-2" style="display:none;">
-                        <input type="hidden" name="photo_data" id="photo_data">
+                        <input type="hidden" name="photo_data" id="photo_data" required>
                     </div>
                     <div class="d-flex justify-content-center gap-2">
                         <button type="button" id="start-camera" class="btn btn-outline-primary">
@@ -80,7 +80,7 @@
             </div>
 
             <div class="d-grid gap-2 mb-5">
-                <button type="submit" class="btn btn-primary btn-lg">Submit Visit Report</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">Submit Visit Report</button>
                 <a href="{% url 'catalogue_visit_list' %}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
@@ -91,43 +91,64 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
+        const form = document.querySelector('form');
+        const submitBtn = document.querySelector('#submit-btn');
+        const photoDataInput = document.getElementById('photo_data');
+
+        form.addEventListener('submit', function(e) {
+            if (!photoDataInput.value) {
+                e.preventDefault();
+                alert("Please capture a photo first!");
+                return false;
+            }
+        });
         $('.select2-party').select2({
             theme: 'bootstrap-5',
             placeholder: 'Select shop...',
             width: '100%'
         });
 
-        const partySelect = document.querySelector('#party');
+        const partySelect = $('#party');
         const checklistCard = document.querySelector('#catalogue-checklist-card');
         const catalogueList = document.querySelector('#catalogue-list');
 
-        partySelect.addEventListener('change', function() {
-            const partyId = this.value;
+        partySelect.on('change', function() {
+            const partyId = $(this).val();
             if (partyId) {
+                checklistCard.style.display = 'block';
+                catalogueList.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Fetching assigned catalogues...</p></div>';
+                
                 fetch(`/catalogues/ajax/assigned-catalogues/${partyId}/`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
                     .then(data => {
                         catalogueList.innerHTML = '';
-                        if (data.catalogues.length > 0) {
+                        if (data.catalogues && data.catalogues.length > 0) {
                             data.catalogues.forEach(c => {
                                 const col = document.createElement('div');
                                 col.className = 'col-md-4 mb-3';
                                 col.innerHTML = `
-                                    <div class="form-check card p-3 h-100">
-                                        <input class="form-check-input" type="checkbox" name="present_catalogues" value="${c.catalogue_type}" id="cat_${c.catalogue_type}" checked>
-                                        <label class="form-check-label fw-bold" for="cat_${c.catalogue_type}">
-                                            ${c.catalogue_type__name}
-                                        </label>
-                                        <div class="small text-muted mt-1">Total Distributed: ${c.total} units</div>
+                                    <div class="form-check card p-3 h-100 shadow-sm border-0">
+                                        <div class="d-flex align-items-center">
+                                            <input class="form-check-input me-3" type="checkbox" name="present_catalogues" value="${c.catalogue_type}" id="cat_${c.catalogue_type}" checked style="width: 1.5rem; height: 1.5rem;">
+                                            <label class="form-check-label fw-bold" for="cat_${c.catalogue_type}">
+                                                ${c.catalogue_type__name}
+                                            </label>
+                                        </div>
+                                        <div class="small text-muted mt-2 ps-5">Total Distributed: <strong>${c.total}</strong> units</div>
                                     </div>
                                 `;
                                 catalogueList.appendChild(col);
                             });
-                            checklistCard.style.display = 'block';
                         } else {
-                            catalogueList.innerHTML = '<div class="col-12 text-center text-muted">No catalogues assigned to this shop yet.</div>';
-                            checklistCard.style.display = 'block';
+                            catalogueList.innerHTML = '<div class="col-12 text-center py-4 bg-light rounded text-muted"><i class="bi bi-info-circle me-2"></i>No catalogues have been distributed to this shop yet.</div>';
                         }
+                    })
+                    .catch(err => {
+                        console.error("Fetch error:", err);
+                        catalogueList.innerHTML = '<div class="col-12 text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading catalogues. Please try again.</div>';
                     });
             } else {
                 checklistCard.style.display = 'none';
@@ -138,7 +159,6 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const photoPreview = document.getElementById('photo-preview');
-        const photoDataInput = document.getElementById('photo_data');
         const startBtn = document.getElementById('start-camera');
         const captureBtn = document.getElementById('capture-photo');
         const retakeBtn = document.getElementById('retake-photo');
@@ -147,16 +167,28 @@
         let stream = null;
 
         startBtn.addEventListener('click', async () => {
+            errorMsg.textContent = "";
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                const constraints = {
+                    video: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                video.style.display = 'block';
-                startBtn.style.display = 'none';
-                captureBtn.style.display = 'inline-block';
-                photoPreview.style.display = 'none';
+                video.onloadedmetadata = (e) => {
+                    video.play();
+                    video.style.display = 'block';
+                    startBtn.style.display = 'none';
+                    captureBtn.style.display = 'inline-block';
+                    photoPreview.style.display = 'none';
+                };
             } catch (err) {
                 console.error("Camera error:", err);
-                errorMsg.textContent = "Unable to access camera. Please ensure permissions are granted.";
+                errorMsg.textContent = "Error: " + err.message + ". Please ensure camera permissions are enabled and you are using a secure connection.";
             }
         });
 

@@ -11,11 +11,14 @@ from .models import (
     CataloguePurchaseItem, CatalogueDistribution, CatalogueDistributionItem, 
     CatalogueVisit, CatalogueVisitItem
 )
-from parties.models import Party
+from parties.models import Party, Vendor
 from django.http import JsonResponse
+from django.utils import timezone
+from core.models import Notification
+from users.models import User
 
 def can_manage_catalogues(user):
-    return user.is_authenticated and (user.is_admin() or user.is_accountant() or user.is_marketing_person())
+    return user.is_authenticated and (user.is_admin() or user.is_accountant() or user.is_marketing_person() or user.is_warehouse_manager())
 
 class CatalogueAccessMixin(UserPassesTestMixin):
     def test_func(self):
@@ -55,16 +58,16 @@ class CatalogueTypeDeleteView(LoginRequiredMixin, CatalogueAccessMixin, DeleteVi
 @user_passes_test(can_manage_catalogues)
 def catalogue_purchase_create(request):
     if request.method == 'POST':
-        party_id = request.POST.get('party')
+        vendor_id = request.POST.get('vendor')
         type_ids = request.POST.getlist('catalogue_type')
         quantities = request.POST.getlist('quantity')
         notes = request.POST.get('notes')
 
-        party = get_object_or_404(Party, id=party_id)
+        vendor = get_object_or_404(Vendor, id=vendor_id)
         
         with transaction.atomic():
             purchase = CataloguePurchase.objects.create(
-                party=party,
+                vendor=vendor,
                 created_by=request.user,
                 notes=notes
             )
@@ -84,18 +87,37 @@ def catalogue_purchase_create(request):
         messages.success(request, "Catalogue stock purchase recorded.")
         return redirect('catalogue_purchase_list')
 
-    parties = Party.objects.all()
+    vendors = Vendor.objects.all()
     catalogue_types = CatalogueType.objects.all()
     return render(request, 'catalogues/purchase_form.html', {
-        'parties': parties,
+        'vendors': vendors,
         'catalogue_types': catalogue_types
     })
 
 @login_required
 @user_passes_test(can_manage_catalogues)
 def catalogue_purchase_list(request):
-    purchases = CataloguePurchase.objects.all().order_by('-created_at').select_related('party', 'created_by').prefetch_related('items__catalogue_type')
-    return render(request, 'catalogues/purchase_list.html', {'purchases': purchases})
+    purchases = CataloguePurchase.objects.all().select_related('vendor', 'created_by').prefetch_related('items__catalogue_type')
+    
+    # Filters
+    vendor_id = request.GET.get('vendor')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if vendor_id:
+        purchases = purchases.filter(vendor_id=vendor_id)
+    if start_date:
+        purchases = purchases.filter(created_at__date__gte=start_date)
+    if end_date:
+        purchases = purchases.filter(created_at__date__lte=end_date)
+        
+    purchases = purchases.order_by('-created_at')
+    vendors = Vendor.objects.all()
+    
+    return render(request, 'catalogues/purchase_list.html', {
+        'purchases': purchases,
+        'vendors': vendors
+    })
 
 # Catalogue Distribution
 @login_required
@@ -151,8 +173,27 @@ def catalogue_distribution_create(request):
 @login_required
 @user_passes_test(can_manage_catalogues)
 def catalogue_distribution_list(request):
-    distributions = CatalogueDistribution.objects.all().order_by('-distributed_at').select_related('party', 'distributed_by').prefetch_related('items__catalogue_type')
-    return render(request, 'catalogues/distribution_list.html', {'distributions': distributions})
+    distributions = CatalogueDistribution.objects.all().select_related('party', 'distributed_by').prefetch_related('items__catalogue_type')
+    
+    # Filters
+    party_id = request.GET.get('party')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if party_id:
+        distributions = distributions.filter(party_id=party_id)
+    if start_date:
+        distributions = distributions.filter(distributed_at__date__gte=start_date)
+    if end_date:
+        distributions = distributions.filter(distributed_at__date__lte=end_date)
+        
+    distributions = distributions.order_by('-distributed_at')
+    parties = Party.objects.all()
+    
+    return render(request, 'catalogues/distribution_list.html', {
+        'distributions': distributions,
+        'parties': parties
+    })
 
 # Catalogue Visit
 @login_required
@@ -164,6 +205,10 @@ def catalogue_visit_create(request):
         photo_data = request.POST.get('photo_data')
         notes = request.POST.get('notes')
         present_type_ids = request.POST.getlist('present_catalogues')
+
+        if not photo_data:
+            messages.error(request, "A photo capture is mandatory for the visit report.")
+            return redirect('catalogue_visit_create')
 
         party = get_object_or_404(Party, id=party_id)
         
@@ -202,12 +247,23 @@ def catalogue_visit_create(request):
                     catalogue_type=c_type,
                     is_present=is_present
                 )
+            
+            # Send notifications to Admin and Accountant
+            notif_message = f"New catalogue visit report for {party.name} by {request.user.username}"
+            notif_link = f"/catalogues/visits/"
+            
+            users_to_notify = User.objects.filter(role__in=[User.ADMIN, User.SUPERADMIN, User.ACCOUNTANT])
+            for u in users_to_notify:
+                Notification.objects.create(user=u, message=notif_message, link=notif_link)
         
         messages.success(request, f"Visit to {party.name} recorded.")
         return redirect('catalogue_visit_list')
 
     parties = Party.objects.annotate(dist_count=Count('catalogue_distributions')).filter(dist_count__gt=0)
-    return render(request, 'catalogues/visit_form.html', {'parties': parties})
+    return render(request, 'catalogues/visit_form.html', {
+        'parties': parties,
+        'today': timezone.localdate()
+    })
 
 @login_required
 def get_assigned_catalogues(request, party_id):
@@ -224,8 +280,19 @@ def catalogue_visit_list(request):
     mode = request.GET.get('mode', 'chronological')
     visits = CatalogueVisit.objects.all().select_related('party', 'visited_by').prefetch_related('items__catalogue_type')
     
+    # Filters
+    party_id = request.GET.get('party')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if party_id:
+        visits = visits.filter(party_id=party_id)
+    if start_date:
+        visits = visits.filter(visit_date__gte=start_date)
+    if end_date:
+        visits = visits.filter(visit_date__lte=end_date)
+
     if mode == 'shop':
-        # Grouping logic will be handled in template or by ordering
         visits = visits.order_by('party__name', '-visit_date')
     else:
         visits = visits.order_by('-visit_date')
@@ -233,17 +300,34 @@ def catalogue_visit_list(request):
     # Add summary to each visit
     for visit in visits:
         total = visit.items.count()
-        present = visit.items.filter(is_present=True).count()
-        visit.summary = f"All {total} present" if total == present else f"{total - present} missing"
-        visit.all_present = (total == present)
+        if total == 0:
+            visit.summary = "No catalogues assigned"
+            visit.all_present = True
+        else:
+            present = visit.items.filter(is_present=True).count()
+            visit.summary = f"All {total} present" if total == present else f"{total - present} missing"
+            visit.all_present = (total == present)
 
+    parties = Party.objects.all()
     return render(request, 'catalogues/visit_list.html', {
         'visits': visits,
-        'mode': mode
+        'mode': mode,
+        'parties': parties
     })
 
 @login_required
 @user_passes_test(can_manage_catalogues)
 def catalogue_inventory_list(request):
-    inventory = CatalogueInventory.objects.all().select_related('catalogue_type').order_by('catalogue_type__name')
+    inventory = CatalogueInventory.objects.all().select_related('catalogue_type')
+    
+    # Filters
+    q = request.GET.get('q')
+    if q:
+        inventory = inventory.filter(catalogue_type__name__icontains=q)
+        
+    inventory = inventory.order_by('catalogue_type__name')
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'catalogues/inventory_list_partial.html', {'inventory': inventory})
+
     return render(request, 'catalogues/inventory_list.html', {'inventory': inventory})

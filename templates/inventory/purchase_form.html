@@ -51,6 +51,8 @@
                                     <th>Quantity</th>
                                     <th>Material Condition</th>
                                     <th>Colour Match</th>
+                                    <th>Tagging Done?</th>
+                                    <th>Via</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -89,6 +91,22 @@
                                             </div>
                                         </div>
                                         <input type="hidden" name="design_colour_match" value="match" class="hidden-match">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tagging_done_0" value="yes" id="tag_yes_0">
+                                                <label class="form-check-label" for="tag_yes_0">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tagging_done_0" value="no" id="tag_no_0" checked>
+                                                <label class="form-check-label" for="tag_no_0">No</label>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="tagging_done" value="no" class="hidden-tag">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="via" class="form-control" placeholder="e.g. Courier">
                                     </td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-outline-danger remove-item">
@@ -158,6 +176,12 @@
             const hiddenMatch = row.querySelector(`.hidden-match`);
             matchRadios.forEach(radio => {
                 radio.addEventListener('change', () => hiddenMatch.value = radio.value);
+            });
+
+            const tagRadios = row.querySelectorAll(`input[type="radio"][name^="tagging_done"]`);
+            const hiddenTag = row.querySelector(`.hidden-tag`);
+            tagRadios.forEach(radio => {
+                radio.addEventListener('change', () => hiddenTag.value = radio.value);
             });
         }
 

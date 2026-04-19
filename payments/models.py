@@ -7,12 +7,15 @@ class Payment(models.Model):
         ('upi', 'UPI'),
         ('cash', 'Cash'),
         ('bank_transfer', 'Bank Transfer'),
+        ('cheque', 'Cheque'),
     )
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     mode = models.CharField(max_length=20, choices=PAYMENT_MODES)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    cheque_date = models.DateField(blank=True, null=True)
+    is_deposited = models.BooleanField(default=False)
     recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, null=True)

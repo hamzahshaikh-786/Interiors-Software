@@ -8,6 +8,7 @@ class User(AbstractUser):
     WAREHOUSE_MANAGER = 'warehouse_manager'
     DELIVERY_PERSON = 'delivery_person'
     MARKETING_PERSON = 'marketing_person'
+    CUTTER = 'cutter'
 
     ROLE_CHOICES = (
         (SUPERADMIN, 'SuperAdmin'),
@@ -16,10 +17,12 @@ class User(AbstractUser):
         (WAREHOUSE_MANAGER, 'Warehouse Manager'),
         (DELIVERY_PERSON, 'Delivery Person'),
         (MARKETING_PERSON, 'Marketing Person'),
+        (CUTTER, 'Cutter'),
     )
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ADMIN)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    vehicle_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="Vehicle Number")
 
     def is_superadmin(self):
         return self.role == self.SUPERADMIN
@@ -32,6 +35,9 @@ class User(AbstractUser):
 
     def is_warehouse_manager(self):
         return self.role == self.WAREHOUSE_MANAGER
+
+    def is_cutter(self):
+        return self.role == 'cutter'
 
     def is_delivery_person(self):
         return self.role == self.DELIVERY_PERSON

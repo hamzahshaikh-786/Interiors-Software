@@ -1,30 +1,30 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %}Login - Interior Soft{% endblock %}
+{% block title %}Login - Bluebell Interiors{% endblock %}
 
 {% block content %}
 <style>
     .login-container {
         display: flex;
-        height: 100vh;
-        width: 100vw;
-        position: fixed;
-        top: 0;
-        left: 0;
-        overflow: hidden;
+        flex-wrap: nowrap;
+        min-height: calc(100vh - 56px);
+        width: 100%;
         margin: 0;
         padding: 0;
+        background: #0b0f16;
+        position: relative;
     }
     @media (min-width: 769px) {
-        body, html {
-            overflow: hidden !important;
-            height: 100% !important;
-            width: 100% !important;
+        .login-container {
+            height: calc(100vh - 56px);
+            overflow: hidden;
         }
     }
     .login-left {
-        flex: 1;
+        flex: 0 0 50%;
+        width: 50%;
         background: #0b0f16;
         color: white;
         display: flex;
@@ -33,7 +33,6 @@
         align-items: center;
         padding: 40px;
         text-align: center;
-        height: 100%;
         position: relative;
         overflow: hidden;
     }
@@ -57,39 +56,39 @@
     }
     .login-left .login-blob {
         position: absolute;
-        width: 520px;
-        height: 520px;
+        width: 650px; /* Bigger blobs */
+        height: 650px;
         border-radius: 999px;
         mix-blend-mode: screen;
         opacity: 0.65;
     }
     .login-left .login-blob.blob-1 {
-        left: 5%;
-        top: 10%;
+        left: -5%;
+        top: -10%;
         background: radial-gradient(circle at 30% 30%, rgba(46,204,113,0.95), transparent 60%),
                     radial-gradient(circle at 70% 70%, rgba(52,152,219,0.9), transparent 60%);
-        animation: blobFloat1 14s ease-in-out infinite alternate;
+        animation: blobFloat1 8s ease-in-out infinite alternate; /* Faster animations */
     }
     .login-left .login-blob.blob-2 {
-        right: 8%;
+        right: -8%;
         top: 25%;
         background: radial-gradient(circle at 30% 30%, rgba(241,196,15,0.95), transparent 62%),
                     radial-gradient(circle at 70% 70%, rgba(231,76,60,0.9), transparent 60%);
-        animation: blobFloat2 16s ease-in-out infinite alternate;
+        animation: blobFloat2 10s ease-in-out infinite alternate;
     }
     .login-left .login-blob.blob-3 {
-        left: 18%;
-        bottom: 8%;
+        left: 10%;
+        bottom: -8%;
         background: radial-gradient(circle at 35% 35%, rgba(155,89,182,0.95), transparent 62%),
                     radial-gradient(circle at 75% 75%, rgba(52,152,219,0.85), transparent 60%);
-        animation: blobFloat3 18s ease-in-out infinite alternate;
+        animation: blobFloat3 9s ease-in-out infinite alternate;
     }
     .login-left .login-blob.blob-4 {
-        right: 18%;
+        right: 10%;
         bottom: 12%;
         background: radial-gradient(circle at 35% 35%, rgba(52,73,94,0.95), transparent 62%),
                     radial-gradient(circle at 75% 75%, rgba(46,204,113,0.75), transparent 60%);
-        animation: blobFloat4 20s ease-in-out infinite alternate;
+        animation: blobFloat4 11s ease-in-out infinite alternate;
     }
     @keyframes blobFloat1 {
         0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
@@ -112,13 +111,14 @@
         .typing-effect { animation: none !important; border-right: none; width: auto; }
     }
     .login-right {
-        flex: 1;
+        flex: 0 0 50%;
+        width: 50%;
         background: #f8f9fa;
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 40px;
-        height: 100%;
+        position: relative;
     }
     .typing-container {
         display: flex;
@@ -150,38 +150,34 @@
     @media (max-width: 768px) {
         .login-container {
             flex-direction: column;
-            position: relative;
-            height: auto;
-            overflow: visible;
+            min-height: auto;
         }
-        .login-left {
-            padding: 60px 20px;
-            min-height: 38vh;
-        }
-        .login-right {
-            padding: 40px 20px;
+        .login-left, .login-right {
+            flex: 0 0 100%;
+            width: 100%;
+            min-height: 50vh;
         }
     }
 </style>
 
 <div class="login-container">
-     <div class="login-left">
+    <div class="login-left">
         <div class="login-blobs" aria-hidden="true">
             <div class="login-blob blob-1"></div>
             <div class="login-blob blob-2"></div>
             <div class="login-blob blob-3"></div>
             <div class="login-blob blob-4"></div>
         </div>
-         <div class="typing-container">
-             <div class="typing-effect">Interior Soft ERP</div>
-         </div>
-         <p class="lead mt-3" style="position: relative; z-index: 2;">The ultimate solution for cloth wholesalers.</p>
-        <div class="mt-4">
-            <i class="bi bi-shop profile-icon" style="font-size: 5rem; color: rgba(255,255,255,0.2);"></i>
+        <div class="typing-container">
+            <div class="typing-effect">Bluebell Interiors ERP</div>
+        </div>
+        <p class="lead mt-3" style="position: relative; z-index: 2;">The ultimate solution for cloth wholesalers.</p>
+        <div class="mt-4" style="position: relative; z-index: 2;">
+            <img src="{% static 'logo.jpeg' %}" alt="Logo" width="150" height="150" style="border-radius: 50%; box-shadow: 0 0 30px rgba(52,152,219,0.3);">
         </div>
     </div>
     <div class="login-right">
-        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; max-width: 400px;">
+        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; max-width: 400px; z-index: 2;">
             <div class="text-center mb-4">
                 <i class="bi bi-shield-lock profile-icon" style="font-size: 3rem;"></i>
                 <h3 class="mt-2 fw-bold">Login</h3>
@@ -196,6 +192,18 @@
                     </button>
                 </div>
             </form>
+            <div class="text-center mt-4">
+                <p class="mb-0 text-muted">Don't have an account? <a href="{% url 'contact_us' %}" class="text-primary fw-bold text-decoration-none">Contact Us</a></p>
+            </div>
+        </div>
+
+        <!-- Powered by Logic Works -->
+        <div class="text-center" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%;">
+            <p class="text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">Powered by</p>
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                <img src="{% static 'LogicWorks_logo.jpeg' %}" alt="Logic Works" width="20" height="20" style="border-radius: 4px; filter: grayscale(20%);">
+                <span class="fw-bold" style="font-size: 0.85rem; color: #555;">Logic Works</span>
+            </div>
         </div>
     </div>
 </div>

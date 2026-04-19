@@ -88,6 +88,8 @@ class PurchaseItem(models.Model):
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     material_condition = models.CharField(max_length=10, choices=CONDITION_CHOICES)
     design_colour_match = models.CharField(max_length=10, choices=COLOUR_MATCH_CHOICES)
+    tagging_done = models.BooleanField(default=False)
+    via = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
 
     def __str__(self):

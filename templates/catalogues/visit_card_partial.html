@@ -1,0 +1,65 @@
+<div class="card shadow-sm mb-4 {% if not visit.all_present %}border-warning{% endif %}">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="mb-0">{{ visit.party.name }}</h5>
+            <small class="text-muted">Visited by: {{ visit.visited_by.username }} | {{ visit.visit_date|date:"d M Y" }}</small>
+        </div>
+        <div class="text-end">
+            <span class="badge {% if visit.all_present %}bg-success{% else %}bg-warning text-dark{% endif %} fs-6">
+                {{ visit.summary }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row g-2">
+                    {% for item in visit.items.all %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-2 border rounded {% if item.is_present %}bg-light-success text-success{% else %}bg-light-danger text-danger{% endif %} d-flex align-items-center gap-2">
+                            <i class="bi {% if item.is_present %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %}"></i>
+                            <span>{{ item.catalogue_type.name }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if visit.notes %}
+                <div class="mt-3 p-3 bg-light rounded small">
+                    <strong>Visit Notes:</strong><br>
+                    {{ visit.notes }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-center mt-3 mt-md-0">
+                {% if visit.photo %}
+                <div class="visit-photo-container">
+                    <img src="{{ visit.photo.url }}" class="img-fluid rounded shadow-sm border visit-photo-thumb" 
+                         style="max-height: 120px; cursor: pointer;" 
+                         alt="Visit evidence" 
+                         data-bs-toggle="modal" 
+                         data-bs-target="#photoModal{{ visit.id }}">
+                </div>
+                
+                <!-- Photo Modal -->
+                <div class="modal fade" id="photoModal{{ visit.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content border-0 bg-transparent">
+                            <div class="modal-header border-0 p-0 position-absolute top-0 end-0" style="z-index: 1060;">
+                                <button type="button" class="btn-close btn-close-white p-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0 text-center">
+                                <img src="{{ visit.photo.url }}" class="img-fluid rounded shadow" alt="Visit evidence full">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-4 bg-light text-muted border rounded">
+                    <i class="bi bi-camera-slash fs-2"></i><br>
+                    No photo captured
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,7 +1,7 @@
 from django.db import models
 
 class ShopConfiguration(models.Model):
-    shop_name = models.CharField(max_length=255, default="Interior Soft")
+    shop_name = models.CharField(max_length=255, default="Bluebell Interiors")
     upi_id = models.CharField(max_length=255, blank=True, null=True)
 
     def build_upi_url(self, amount=None, note=None, currency="INR", fallback_upi_id="shopowner@upi"):
@@ -9,7 +9,7 @@ class ShopConfiguration(models.Model):
         from urllib.parse import urlencode, quote
 
         pa = (self.upi_id or "").strip() or fallback_upi_id
-        pn = (self.shop_name or "").strip() or "Interior Soft"
+        pn = (self.shop_name or "").strip() or "Bluebell Interiors"
 
         params = {
             "pa": pa,

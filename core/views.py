@@ -10,11 +10,82 @@ from ledger.models import PartyBalance
 from django.utils import timezone
 from datetime import timedelta
 from .models import Notification
+from payments.models import Payment
+
+from django.core.management import call_command
+from django.core.cache import cache
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+from django.core.mail import send_mail
+from django.conf import settings
+
+def contact_us(request):
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        email = request.POST.get('email', '')
+        phone = request.POST.get('phone', '')
+        message = request.POST.get('message', '')
+        
+        full_name = f"{first_name} {last_name}".strip()
+        
+        subject = f"New ERP Inquiry from {full_name}"
+        email_message = f"Name: {full_name}\nEmail: {email}\nPhone: {phone}\n\nMessage:\n{message}"
+        
+        try:
+            send_mail(
+                subject,
+                email_message,
+                settings.DEFAULT_FROM_EMAIL,
+                ['logicworks.official@gmail.com'],
+                fail_silently=False,
+            )
+            messages.success(request, "Thank you! Your message has been sent. We'll get back to you soon.")
+        except Exception as e:
+            # Fallback for development if email is not configured
+            messages.info(request, "Your message has been received! (Note: Email simulation in progress)")
+            print(f"Email error: {e}")
+            
+        return redirect('contact_us')
+        
+    return render(request, 'core/contact.html')
 
 @login_required
 def dashboard(request):
     user = request.user
     context = {}
+
+    # Automatic cleanup and notification check (once per day)
+    if user.is_admin() or user.is_superadmin() or user.is_accountant():
+        last_notif_date = cache.get('last_cheque_notif_date')
+        today = timezone.localdate()
+        
+        if last_notif_date != today:
+            try:
+                # Run photo cleanup if needed
+                last_cleanup = cache.get('last_photo_cleanup_date')
+                if last_cleanup != today:
+                    call_command('cleanup_photos')
+                    cache.set('last_photo_cleanup_date', today, 86400)
+
+                # Check for due cheques (including overdue ones)
+                due_cheques = Payment.objects.filter(mode='cheque', is_deposited=False, cheque_date__lte=today)
+                if due_cheques.exists():
+                    count = due_cheques.count()
+                    msg = f"Alert: {count} cheque{'s' if count > 1 else ''} are due for deposit!"
+                    link = "/payments/cheques/"
+                    
+                    # Notify Admin and Accountants
+                    notif_users = User.objects.filter(role__in=['admin', 'superadmin', 'accountant'])
+                    for u in notif_users:
+                        # Only create if not already notified today for the same count
+                        Notification.objects.create(user=u, message=msg, link=link)
+                
+                cache.set('last_cheque_notif_date', today, 86400) # 24 hours
+            except Exception as e:
+                print(f"Error during automatic checks: {e}")
 
     if user.is_admin() or user.is_accountant():
         context['total_orders'] = Order.objects.count()
@@ -23,7 +94,8 @@ def dashboard(request):
         context['low_stock_items'] = Stock.objects.filter(quantity__lte=models.F('low_stock_threshold'))
         
         # Monthly Sales
-        month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0)
+        now = timezone.localtime(timezone.now())
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         context['monthly_sales'] = Order.objects.filter(created_at__gte=month_start).aggregate(models.Sum('grand_total'))['grand_total__sum'] or 0.00
         
         # Outstanding Payments (Separated)
@@ -41,6 +113,9 @@ def dashboard(request):
 
     elif user.is_warehouse_manager():
         return redirect('warehouse_dashboard')
+
+    elif user.is_cutter():
+        return redirect('cutter_dashboard')
 
     elif user.is_delivery_person():
         return redirect('delivery_dashboard')
@@ -115,7 +190,7 @@ def daybook(request):
     if date_str:
         selected_date = timezone.datetime.strptime(date_str, '%Y-%m-%d').date()
     else:
-        selected_date = timezone.now().date()
+        selected_date = timezone.localdate()
         
     start_time = timezone.make_aware(timezone.datetime.combine(selected_date, timezone.datetime.min.time()))
     end_time = timezone.make_aware(timezone.datetime.combine(selected_date, timezone.datetime.max.time()))
@@ -139,8 +214,8 @@ def daybook(request):
     }
     return render(request, 'core/daybook.html', context)
 
-@login_required
 def logout_view(request):
-    logout(request)
-    messages.success(request, "Logged out successfully")
+    if request.user.is_authenticated:
+        logout(request)
+        messages.success(request, "Logged out successfully")
     return redirect('login')

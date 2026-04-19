@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Register - Bluebell Interiors{% endblock %}
+
+{% block content %}
+<style>
+    .register-container {
+        display: flex;
+        flex-wrap: nowrap;
+        min-height: calc(100vh - 56px);
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #0b0f16;
+        position: relative;
+    }
+    @media (min-width: 769px) {
+        .register-container {
+            height: calc(100vh - 56px);
+            overflow: hidden;
+        }
+    }
+    .register-left {
+        flex: 0 0 50%;
+        width: 50%;
+        background: #0b0f16;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .register-left::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(1200px 600px at 80% 20%, rgba(155,89,182,0.25), transparent 60%),
+                    radial-gradient(900px 600px at 20% 60%, rgba(52,152,219,0.22), transparent 60%),
+                    linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.65));
+        pointer-events: none;
+        z-index: 1;
+    }
+    .register-left .register-blobs {
+        position: absolute;
+        inset: -20%;
+        z-index: 0;
+        pointer-events: none;
+        filter: blur(60px);
+        opacity: 0.9;
+    }
+    .register-left .register-blob {
+        position: absolute;
+        width: 650px;
+        height: 650px;
+        border-radius: 999px;
+        mix-blend-mode: screen;
+        opacity: 0.65;
+    }
+    .register-left .register-blob.blob-1 {
+        right: -5%;
+        top: -10%;
+        background: radial-gradient(circle at 30% 30%, rgba(155,89,182,0.95), transparent 60%),
+                    radial-gradient(circle at 70% 70%, rgba(52,152,219,0.9), transparent 60%);
+        animation: blobFloat1 8s ease-in-out infinite alternate;
+    }
+    .register-left .register-blob.blob-2 {
+        left: -8%;
+        top: 25%;
+        background: radial-gradient(circle at 30% 30%, rgba(52,152,219,0.95), transparent 62%),
+                    radial-gradient(circle at 70% 70%, rgba(46,204,113,0.9), transparent 60%);
+        animation: blobFloat2 10s ease-in-out infinite alternate;
+    }
+    @keyframes blobFloat1 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(-90px, 60px, 0) scale(1.08) rotate(10deg); }
+    }
+    @keyframes blobFloat2 {
+        0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+        100% { transform: translate3d(80px, 70px, 0) scale(1.1) rotate(-12deg); }
+    }
+    .register-right {
+        flex: 0 0 50%;
+        width: 50%;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        position: relative;
+    }
+    @media (max-width: 768px) {
+        .register-container {
+            flex-direction: column;
+            min-height: auto;
+        }
+        .register-left, .register-right {
+            flex: 0 0 100%;
+            width: 100%;
+            min-height: 50vh;
+        }
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-left">
+        <div class="register-blobs" aria-hidden="true">
+            <div class="register-blob blob-1"></div>
+            <div class="register-blob blob-2"></div>
+        </div>
+        <div style="position: relative; z-index: 2;">
+            <h1 class="display-4 fw-bold mb-4">Join Us</h1>
+            <p class="lead">Create an account to manage your cloth wholesale business efficiently.</p>
+            <div class="mt-5">
+                <img src="{% static 'logo.jpeg' %}" alt="Logo" width="120" height="120" style="border-radius: 50%; border: 4px solid rgba(255,255,255,0.1);">
+            </div>
+        </div>
+    </div>
+    <div class="register-right">
+        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; max-width: 450px; margin: 20px 0; z-index: 2;">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus profile-icon" style="font-size: 3rem;"></i>
+                <h3 class="mt-2 fw-bold">Create Account</h3>
+                <p class="text-muted">Fill in the details below</p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg" style="border-radius: 10px;">
+                        Register <i class="bi bi-check-circle ms-1"></i>
+                    </button>
+                    <a href="{% url 'login' %}" class="btn btn-link text-muted">
+                        Already have an account? Login here
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Powered by Logic Works -->
+        <div class="text-center" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%;">
+            <p class="text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">Powered by</p>
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                <img src="{% static 'LogicWorks_logo.jpeg' %}" alt="Logic Works" width="20" height="20" style="border-radius: 4px; filter: grayscale(20%);">
+                <span class="fw-bold" style="font-size: 0.85rem; color: #555;">Logic Works</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

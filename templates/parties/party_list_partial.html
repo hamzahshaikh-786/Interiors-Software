@@ -5,34 +5,64 @@
                 <th>Name</th>
                 <th>Phone</th>
                 <th>Email</th>
+                {% if not is_vendor_list %}
                 <th>GST No.</th>
                 <th>Credit Limit</th>
                 <th>Balance Due</th>
+                {% else %}
+                <th>Address</th>
+                {% endif %}
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for party in parties %}
-            <tr>
-                <td><a href="{% url 'party_detail' party.pk %}">{{ party.name }}</a></td>
-                <td>{{ party.phone }}</td>
-                <td>{{ party.email|default:"-" }}</td>
-                <td>{{ party.gst_number|default:"-" }}</td>
-                <td>₹{{ party.credit_limit }}</td>
-                <td>₹{{ party.balance.current_balance|default:"0.00" }}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <a href="{% url 'party_ledger' party.pk %}" class="btn btn-outline-info">Ledger</a>
-                        <a href="{% url 'party_edit' party.pk %}" class="btn btn-outline-secondary">Edit</a>
-                        <a href="{% url 'party_delete' party.pk %}" class="btn btn-outline-danger">Delete</a>
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="text-center py-3">No parties found</td>
-            </tr>
-            {% endfor %}
+            {% if is_vendor_list %}
+                {% for vendor in vendors %}
+                <tr>
+                    <td>
+                        {{ vendor.name }}
+                        {% if vendor.alias %}
+                        <div class="small text-muted">Alias: {{ vendor.alias }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ vendor.phone|default:"-" }}</td>
+                    <td>{{ vendor.email|default:"-" }}</td>
+                    <td>{{ vendor.address|default:"-" }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'vendor_edit' vendor.pk %}" class="btn btn-outline-secondary">Edit</a>
+                            <a href="{% url 'vendor_delete' vendor.pk %}" class="btn btn-outline-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-3">No vendors found</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                {% for party in parties %}
+                <tr>
+                    <td><a href="{% url 'party_detail' party.pk %}">{{ party.name }}</a></td>
+                    <td>{{ party.phone }}</td>
+                    <td>{{ party.email|default:"-" }}</td>
+                    <td>{{ party.gst_number|default:"-" }}</td>
+                    <td>₹{{ party.credit_limit }}</td>
+                    <td>₹{{ party.balance.current_balance|default:"0.00" }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'party_ledger' party.pk %}" class="btn btn-outline-info">Ledger</a>
+                            <a href="{% url 'party_edit' party.pk %}" class="btn btn-outline-secondary">Edit</a>
+                            <a href="{% url 'party_delete' party.pk %}" class="btn btn-outline-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-3">No parties found</td>
+                </tr>
+                {% endfor %}
+            {% endif %}
         </tbody>
     </table>
 </div>

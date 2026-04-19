@@ -8,4 +8,10 @@ urlpatterns = [
     path('<int:pk>/edit/', views.PartyUpdateView.as_view(), name='party_edit'),
     path('<int:pk>/delete/', views.PartyDeleteView.as_view(), name='party_delete'),
     path('import/', views.party_import, name='party_import'),
+
+    # Vendors
+    path('vendors/', views.VendorListView.as_view(), name='vendor_list'),
+    path('vendors/add/', views.VendorCreateView.as_view(), name='vendor_add'),
+    path('vendors/<int:pk>/edit/', views.VendorUpdateView.as_view(), name='vendor_edit'),
+    path('vendors/<int:pk>/delete/', views.VendorDeleteView.as_view(), name='vendor_delete'),
 ]

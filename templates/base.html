@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Interior Soft{% endblock %}</title>
+    <title>{% block title %}Bluebell Interiors{% endblock %}</title>
+    {% load static %}
+    <link rel="icon" type="image/jpeg" href="{% static 'logo.jpeg' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
+        * {
+            box-sizing: border-box;
+        }
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
@@ -17,35 +22,101 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
+            overflow-x: hidden !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 56px 0 0 0 !important; /* Added 56px top padding for fixed navbar */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        html {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .main-wrapper {
+            width: 100% !important;
+            overflow-x: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         .navbar {
-            background-color: var(--primary-color);
+            background-color: var(--primary-color) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            z-index: 1080 !important; /* Ensure it stays on top */
+            position: fixed !important; /* Changed from sticky-top */
+            top: 0 !important;
+            left: 0 !important;
+            height: 56px !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .navbar .container-fluid {
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            display: flex;
+            flex-wrap: inherit;
+            align-items: center;
+            justify-content: space-between;
         }
         .sidebar {
-            height: calc(100vh - 56px);
+            height: 100vh;
             position: fixed;
-            top: 56px;
+            top: 0;
             left: 0;
             z-index: 1000;
             background-color: var(--secondary-color);
             color: white;
             display: flex;
             flex-direction: column;
-            padding-bottom: 0;
-            overflow: hidden; /* Prevent sidebar itself from scrolling */
-        }
-        .sidebar-nav-container {
-            flex-grow: 1;
-            overflow-y: auto; /* Let the nav list scroll */
-            padding-top: 1rem;
+            padding-top: 56px; /* Offset for sticky navbar */
+            overflow: hidden;
         }
         @media (min-width: 768px) {
             .sidebar {
                 width: 16.666667%; /* matches col-md-2 */
             }
         }
+        .sidebar-nav-container {
+            flex: 1;
+            overflow-y: auto !important;
+            padding-top: 1rem;
+            padding-bottom: 140px; /* More space for the fixed profile */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.3) transparent;
+            overscroll-behavior: contain;
+        }
+        .sidebar-profile {
+            flex-shrink: 0;
+            padding: 20px 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: var(--secondary-color);
+            width: 100%;
+            z-index: 1010;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        /* Custom scrollbar for Webkit browsers (Chrome, Edge, Safari) */
+        .sidebar-nav-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .sidebar-nav-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-nav-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+        .sidebar-nav-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
         main {
-            margin-left: 16.666667%; /* This matches col-md-2 */
+            margin-left: 16.666667%; /* matches col-md-2 width */
             width: 83.333333%;
             padding-bottom: 60px;
         }
@@ -54,10 +125,11 @@
                 position: fixed;
                 top: 56px;
                 left: -100%;
-                width: 250px;
+                width: 280px;
                 height: calc(100vh - 56px);
                 transition: left 0.3s ease;
                 z-index: 1050;
+                padding-top: 0;
             }
             .sidebar.show {
                 left: 0;
@@ -65,20 +137,12 @@
             main {
                 margin-left: 0;
                 width: 100%;
+                padding-left: 10px;
+                padding-right: 10px;
             }
-        }
-        @media (max-width: 767.98px) {
-            main {
-                padding-left: 0.75rem;
-                padding-right: 0.75rem;
+            .navbar-brand {
+                font-size: 1.1rem;
             }
-        }
-        .sidebar-profile {
-            padding: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            width: 100%;
-            margin-top: auto; /* Always at bottom */
         }
         .profile-icon {
             font-size: 2rem;
@@ -135,9 +199,9 @@
         }
         .nav-link { position: relative; }
         .dropdown-notifications {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-            width: 300px;
+            width: 320px;
         }
         .notification-item {
             border-bottom: 1px solid #eee;
@@ -149,21 +213,120 @@
         }
         .notification-item:hover { background-color: #f8f9fa; }
         .notification-item.unread { background-color: #fff9f9; font-weight: bold; }
+        /* Sidebar Dropdown Styling */
+        .sidebar .nav-item .nav-link {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .sidebar .nav-item .nav-link span {
+            display: flex;
+            align-items: center;
+        }
+        .sidebar .submenu .nav-link {
+            padding-left: 30px;
+        }
+        .sidebar .submenu {
+            background-color: rgba(0,0,0,0.1);
+            padding-left: 15px;
+            display: none; /* Default hidden */
+        }
+        .sidebar .nav-item.open > .submenu {
+            display: block;
+        }
+        .sidebar .nav-item.active-section > .submenu {
+            display: block;
+        }
+        @media (min-width: 768px) {
+            .sidebar .nav-item:hover > .submenu {
+                display: block;
+            }
+        }
+        .sidebar .nav-item .bi-chevron-down {
+            transition: transform 0.3s;
+        }
+        .sidebar .nav-item.open > .nav-link .bi-chevron-down,
+        .sidebar .nav-item.active-section > .nav-link .bi-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        /* Neat Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .sidebar-nav-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar-nav-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
+        }
+        .sidebar-nav-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.4);
+        }
+
+        main {
+            padding-bottom: 60px;
+            overflow-y: auto;
+            height: calc(100vh - 56px);
+        }
+        @media (min-width: 768px) {
+            .sidebar-layout main {
+                margin-left: 16.666667%;
+                width: 83.333333%;
+            }
+            .full-layout main {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        @media (max-width: 767.98px) {
+            main {
+                margin-left: 0;
+                width: 100%;
+                height: auto;
+            }
+        }
+        .login-btn-header:hover {
+            color: #000 !important;
+            background-color: #fff !important;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+<body class="{% if user.is_authenticated and request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}sidebar-layout{% else %}full-layout{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
             {% if user.is_authenticated %}
             <button class="btn btn-link text-white d-md-none me-2 p-0" type="button" id="sidebarToggle">
                 <i class="bi bi-list fs-3"></i>
             </button>
             {% endif %}
-            <a class="navbar-brand" href="{% url 'dashboard' %}">Interior Soft</a>
-            <!-- Desktop only welcome -->
+            
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+                <img src="{% static 'logo.jpeg' %}" alt="Logo" width="35" height="35" class="rounded-circle me-2">
+                <span class="fw-bold d-none d-sm-inline">Bluebell Interiors</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown me-3">
                             <a class="nav-link dropdown-toggle text-white" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -186,12 +349,25 @@
                                 {% endfor %}
                             </div>
                         </li>
-                        <li class="nav-item d-none d-lg-block">
-                            <span class="nav-link text-white">Welcome, {{ user.username }}</span>
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li>
+                                    <form action="{% url 'logout' %}" method="post" class="px-3 py-1">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger w-100">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link btn btn-outline-light btn-sm text-white px-3 me-2 login-btn-header" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-primary btn-sm text-white px-3 me-2" href="{% url 'contact_us' %}" style="border-radius: 10px;">Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -201,114 +377,194 @@
 
     <div class="container-fluid">
         <div class="row">
-            {% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
+            {% if user.is_authenticated and request.resolver_match.url_name != 'login' and request.resolver_match.url_name != 'register' %}
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="sidebar-nav-container">
-                    <ul class="nav flex-column">
-                        {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'dashboard' %}">
-                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    <div class="sidebar-nav-container">
+                        <ul class="nav flex-column">
+                            {% if user.is_admin or user.is_accountant %}
+                            <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %} d-flex justify-content-between align-items-center" href="{% url 'dashboard' %}">
+                                <span>Dashboard</span>
+                                <i class="bi bi-speedometer2 small"></i>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'party_list' %}">
-                                <i class="bi bi-people me-2"></i> Parties
+                            {% endif %}
+
+                        <!-- Sales & CRM -->
+                        {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
+                        <li class="nav-item has-submenu {% if '/orders/' in request.path or '/parties/' in request.path and '/vendors/' not in request.path %}active-section{% endif %}">
+                            <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
+                                <span>Sales & CRM</span>
+                                <i class="bi bi-people small"></i>
                             </a>
+                            <ul class="submenu list-unstyled">
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/parties/' in request.path and '/vendors/' not in request.path %}active{% endif %}" href="{% url 'party_list' %}">
+                                        <span>Parties</span>
+                                        <i class="bi bi-person-lines-fill small"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/orders/' in request.path %}active{% endif %}" href="{% url 'order_list' %}">
+                                        <span>Orders</span>
+                                        <i class="bi bi-cart small"></i>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         {% endif %}
-                        
+
+                            <!-- Inventory & Logistics -->
+                        {% if user.is_admin or user.is_accountant or user.is_warehouse_manager or user.is_cutter %}
+                        <li class="nav-item has-submenu {% if '/inventory/' in request.path or '/warehouse/' in request.path or '/cutter/' in request.path %}active-section{% endif %}">
+                            <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
+                                <span>Inventory & Logistics</span>
+                                <i class="bi bi-box small"></i>
+                            </a>
+                            <ul class="submenu list-unstyled">
+                                {% if user.is_admin or user.is_accountant %}
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/inventory/stock/' in request.path %}active{% endif %}" href="{% url 'stock_list' %}">
+                                        <span>Main Stock</span>
+                                        <i class="bi bi-box-seam small"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/inventory/collections/' in request.path %}active{% endif %}" href="{% url 'collection_list' %}">
+                                        <span>Collections</span>
+                                        <i class="bi bi-folder small"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/inventory/purchases/' in request.path %}active{% endif %}" href="{% url 'purchase_list' %}">
+                                        <span>Stock Purchases</span>
+                                        <i class="bi bi-bag-plus small"></i>
+                                    </a>
+                                </li>
+                                {% if user.is_warehouse_manager or user.is_cutter %}
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if request.resolver_match.url_name == 'warehouse_dashboard' or request.resolver_match.url_name == 'cutter_dashboard' %}active{% endif %}" href="{% if user.is_cutter %}{% url 'cutter_dashboard' %}{% else %}{% url 'warehouse_dashboard' %}{% endif %}">
+                                        <span>{% if user.is_cutter %}Cutter Dashboard{% else %}Warehouse{% endif %}</span>
+                                        <i class="bi bi-house-door small"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+
+                            <!-- Catalogue Management -->
+                            {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
+                            <li class="nav-item has-submenu {% if '/catalogues/' in request.path or '/vendors/' in request.path %}active-section{% endif %}">
+                                <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
+                                <span>Catalogue Management</span>
+                                <i class="bi bi-journal-bookmark small"></i>
+                            </a>
+                                <ul class="submenu list-unstyled">
+                                    <li>
+                                        <a class="nav-link d-flex justify-content-between align-items-center {% if '/parties/vendors/' in request.path or '/vendors/' in request.path %}active{% endif %}" href="{% url 'vendor_list' %}">
+                                            <span>Vendors</span>
+                                            <i class="bi bi-building small"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex justify-content-between align-items-center {% if '/catalogues/inventory/' in request.path %}active{% endif %}" href="{% url 'catalogue_inventory_list' %}">
+                                            <span>Catalogue Stock</span>
+                                            <i class="bi bi-grid-3x3-gap small"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex justify-content-between align-items-center {% if '/catalogues/purchases/' in request.path %}active{% endif %}" href="{% url 'catalogue_purchase_list' %}">
+                                            <span>Purchase History</span>
+                                            <i class="bi bi-journal-text small"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex justify-content-between align-items-center {% if '/catalogues/distributions/' in request.path %}active{% endif %}" href="{% url 'catalogue_distribution_list' %}">
+                                            <span>Distributions</span>
+                                            <i class="bi bi-truck small"></i>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex justify-content-between align-items-center {% if '/catalogues/visits/' in request.path %}active{% endif %}" href="{% url 'catalogue_visit_list' %}">
+                                            <span>Visit Tracking</span>
+                                            <i class="bi bi-geo-alt small"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            {% endif %}
+
+                        <!-- Accounts & Finance -->
                         {% if user.is_admin or user.is_accountant %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'order_list' %}">
-                                <i class="bi bi-cart me-2"></i> Orders
+                        <li class="nav-item has-submenu {% if '/ledger/' in request.path or '/cheques/' in request.path or '/analytics/' in request.path or '/daybook/' in request.path %}active-section{% endif %}">
+                            <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
+                                <span>Accounts & Finance</span>
+                                <i class="bi bi-wallet2 small"></i>
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'stock_list' %}">
-                                <i class="bi bi-box me-2"></i> Inventory
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'collection_list' %}">
-                                <i class="bi bi-folder me-2"></i> Collections
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'purchase_list' %}">
-                                <i class="bi bi-bag-plus me-2"></i> Purchases
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'ledger_list' %}">
-                                <i class="bi bi-journal-text me-2"></i> Ledger
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'analytics' %}">
-                                <i class="bi bi-graph-up me-2"></i> Analytics
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'daybook' %}">
-                                <i class="bi bi-calendar-check me-2"></i> Daybook
-                            </a>
-                        </li>
-                        {% if user.is_admin %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'shop_config' %}">
-                                <i class="bi bi-gear me-2"></i> Shop Config
-                            </a>
-                        </li>
-                        {% endif %}
-                        {% endif %}
-
-                        {% if user.is_superadmin %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'user_list' %}">
-                                <i class="bi bi-people-fill me-2"></i> User Management
-                            </a>
+                            <ul class="submenu list-unstyled">
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/ledger/' in request.path %}active{% endif %}" href="{% url 'ledger_list' %}">
+                                        <span>Ledger</span>
+                                        <i class="bi bi-journal-text small"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/cheques/' in request.path %}active{% endif %}" href="{% url 'cheque_register' %}">
+                                        <span>Cheque Register</span>
+                                        <i class="bi bi-card-checklist small"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/analytics/' in request.path %}active{% endif %}" href="{% url 'analytics' %}">
+                                        <span>Analytics</span>
+                                        <i class="bi bi-graph-up small"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/daybook/' in request.path %}active{% endif %}" href="{% url 'daybook' %}">
+                                        <span>Daybook</span>
+                                        <i class="bi bi-calendar-check small"></i>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         {% endif %}
 
-                        {% if user.is_warehouse_manager %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'warehouse_dashboard' %}">
-                                <i class="bi bi-house-door me-2"></i> Warehouse
+                        <!-- System -->
+                        {% if user.is_admin or user.is_superadmin %}
+                        <li class="nav-item has-submenu {% if '/shop-config/' in request.path or '/users/' in request.path %}active-section{% endif %}">
+                            <a class="nav-link dropdown-toggle-custom d-flex justify-content-between align-items-center" href="javascript:void(0)">
+                                <span>System</span>
+                                <i class="bi bi-gear small"></i>
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'purchase_list' %}">
-                                <i class="bi bi-bag-plus me-2"></i> My Purchases
-                            </a>
-                        </li>
-                        {% endif %}
-
-                        {% if user.is_admin or user.is_accountant or user.is_marketing_person %}
-                        <li class="nav-item border-top mt-2 pt-2">
-                            <span class="nav-link disabled small text-uppercase fw-bold text-white-50">Catalogue Management</span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'catalogues/inventory' in request.path %}active{% endif %}" href="{% url 'catalogue_inventory_list' %}">
-                                <i class="bi bi-grid-3x3-gap me-2"></i> Catalogue Stock
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'catalogues/distributions' in request.path %}active{% endif %}" href="{% url 'catalogue_distribution_list' %}">
-                                <i class="bi bi-truck me-2"></i> Distributions
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'catalogues/visits' in request.path %}active{% endif %}" href="{% url 'catalogue_visit_list' %}">
-                                <i class="bi bi-geo-alt me-2"></i> Visit Tracking
-                            </a>
+                            <ul class="submenu list-unstyled">
+                                {% if user.is_admin %}
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/shop-config/' in request.path %}active{% endif %}" href="{% url 'shop_config' %}">
+                                        <span>Shop Config</span>
+                                        <i class="bi bi-gear-fill small"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user.is_superadmin %}
+                                <li>
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if '/users/' in request.path %}active{% endif %}" href="{% url 'user_list' %}">
+                                        <span>User Management</span>
+                                        <i class="bi bi-people-fill small"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
                         </li>
                         {% endif %}
 
                         {% if user.is_delivery_person %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'delivery_dashboard' %}">
-                                <i class="bi bi-geo-alt me-2"></i> Delivery Dashboard
+                            <a class="nav-link {% if request.resolver_match.url_name == 'delivery_dashboard' %}active{% endif %} d-flex justify-content-between align-items-center" href="{% url 'delivery_dashboard' %}">
+                                <span>Delivery Dashboard</span>
+                                <i class="bi bi-geo-alt small"></i>
                             </a>
                         </li>
                         {% endif %}
@@ -320,7 +576,7 @@
                         <i class="bi bi-person-circle profile-icon me-2"></i>
                         <div>
                             <div class="small fw-bold">{{ user.username }}</div>
-                            <div class="small text-muted" style="font-size: 0.75rem;">{{ user.get_role_display }}</div>
+                            <div class="small text-white-50" style="font-size: 0.75rem;">{{ user.get_role_display }}</div>
                         </div>
                     </div>
                     <form action="{% url 'logout' %}" method="post">
@@ -333,7 +589,7 @@
             </nav>
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
             {% else %}
-            <main class="col-12 py-4">
+            <main class="col-12 p-0">
             {% endif %}
                 
             {% if messages %}
@@ -364,7 +620,26 @@
                         });
                     }
 
-                    const alerts = document.querySelectorAll('.alert');
+                // Sidebar Submenu Logic
+                const submenuToggles = document.querySelectorAll('.dropdown-toggle-custom');
+                submenuToggles.forEach(toggle => {
+                    toggle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const parent = this.parentElement;
+                        const wasOpen = parent.classList.contains('open');
+                        
+                        // Close other submenus if needed (optional, user didn't specify)
+                        // document.querySelectorAll('.nav-item.has-submenu').forEach(item => item.classList.remove('open'));
+                        
+                        if (wasOpen) {
+                            parent.classList.remove('open');
+                        } else {
+                            parent.classList.add('open');
+                        }
+                    });
+                });
+
+                const alerts = document.querySelectorAll('.alert');
                     alerts.forEach(alert => {
                         setTimeout(() => {
                             const bsAlert = new bootstrap.Alert(alert);
@@ -408,6 +683,18 @@
             </main>
         </div>
     </div>
+
+    <footer class="bg-light py-3 border-top mt-auto">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between small text-muted">
+                <div>&copy; {% now "Y" %} Bluebell Interiors</div>
+                <div>
+                    <a href="#" class="text-decoration-none text-muted me-3">Privacy Policy</a>
+                    <a href="#" class="text-decoration-none text-muted">Terms & Conditions</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

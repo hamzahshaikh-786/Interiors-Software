@@ -17,3 +17,17 @@ class Party(models.Model):
     class Meta:
         verbose_name_plural = "Parties"
         ordering = ['name']
+
+class Vendor(models.Model):
+    name = models.CharField(max_length=255)
+    alias = models.CharField(max_length=255, blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']

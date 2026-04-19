@@ -7,7 +7,27 @@ import os
 from django.conf import settings
 from django.http import HttpResponse
 
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+
 User = get_user_model()
+
+class RegisterForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("username", "email")
+
+def register(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registration successful")
+            return redirect('dashboard')
+    else:
+        form = RegisterForm()
+    return render(request, 'registration/register.html', {'form': form})
 
 def is_superadmin(user):
     return user.is_authenticated and user.is_superadmin()
@@ -27,13 +47,15 @@ def user_create(request):
         password = request.POST.get('password')
         role = request.POST.get('role')
         is_active = request.POST.get('is_active') == 'on'
+        vehicle_number = request.POST.get('vehicle_number')
         
         user = User.objects.create_user(
             username=username, 
             email=email, 
             password=password, 
             role=role,
-            is_active=is_active
+            is_active=is_active,
+            vehicle_number=vehicle_number
         )
         messages.success(request, f"User {username} created successfully")
         return redirect('user_list')
@@ -49,6 +71,7 @@ def user_update(request, pk):
         user.email = request.POST.get('email')
         user.role = request.POST.get('role')
         user.is_active = request.POST.get('is_active') == 'on'
+        user.vehicle_number = request.POST.get('vehicle_number')
         password = request.POST.get('password')
         if password:
             user.set_password(password)

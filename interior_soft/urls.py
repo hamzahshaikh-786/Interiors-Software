@@ -29,6 +29,7 @@ urlpatterns = [
     path('notifications/<int:pk>/seen/', core_views.mark_notification_seen, name='notification_seen'),
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html', redirect_authenticated_user=True), name='login'),
     path('logout/', core_views.logout_view, name='logout'),
+    path('contact-us/', core_views.contact_us, name='contact_us'),
     
     path('parties/', include('parties.urls')),
     path('orders/', include('orders.urls')),

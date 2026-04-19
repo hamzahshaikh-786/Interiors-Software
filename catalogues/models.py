@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from parties.models import Party
+from parties.models import Party, Vendor
 
 class CatalogueType(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -19,13 +19,13 @@ class CatalogueInventory(models.Model):
         return f"{self.catalogue_type.name}: {self.quantity}"
 
 class CataloguePurchase(models.Model):
-    party = models.ForeignKey(Party, on_delete=models.CASCADE, related_name='catalogue_purchases')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='catalogue_purchases', null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Catalogue Purchase {self.id} from {self.party.name}"
+        return f"Catalogue Purchase {self.id} from {self.vendor.name}"
 
 class CataloguePurchaseItem(models.Model):
     purchase = models.ForeignKey(CataloguePurchase, on_delete=models.CASCADE, related_name='items')

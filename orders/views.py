@@ -20,6 +20,10 @@ from io import BytesIO
 
 class AdminAccountantMixin(UserPassesTestMixin):
     def test_func(self):
+        return self.request.user.is_admin() or self.request.user.is_accountant() or self.request.user.is_marketing_person()
+
+class AdminAccountantOnlyMixin(UserPassesTestMixin):
+    def test_func(self):
         return self.request.user.is_admin() or self.request.user.is_accountant()
 
 class WarehouseManagerMixin(UserPassesTestMixin):
@@ -105,12 +109,15 @@ def order_create(request):
             qty = Decimal(qty)
             
             # Stock check
+            # Validation removed as per user request
+            """
             stock, created = Stock.objects.get_or_create(design_type=dt)
             if stock.quantity < qty:
                 # Rollback is automatic due to transaction.atomic() decorator
                 messages.error(request, f"Unable to place, update stock from inventory! (Insufficient stock for {dt.name}. Available: {stock.quantity})")
                 transaction.set_rollback(True)
                 return redirect('order_create')
+            """
                 
             price = Decimal(price) if price else Decimal('0.00')
             item_total = qty * price
@@ -149,12 +156,13 @@ def order_create(request):
             balance.current_balance += grand_total
             balance.save()
 
-        # Notification for Warehouse Managers
+        # Notification for Warehouse Managers and Cutters
         msg = f"New Order {order.invoice_number} received for cutting."
-        link = f"/orders/{order.id}/"
-        cutters = User.objects.filter(role='warehouse_manager')
-        for cutter in cutters:
-            Notification.objects.create(user=cutter, message=msg, link=link)
+        # Always notify Warehouse Manager and Cutter
+        warehouse_and_cutters = User.objects.filter(role__in=['warehouse_manager', 'cutter'])
+        for person in warehouse_and_cutters:
+            link = f"/orders/cutter/" if person.role == 'cutter' else f"/orders/warehouse/"
+            Notification.objects.create(user=person, message=msg, link=link)
 
         messages.success(request, f"Order {order.invoice_number} created successfully")
         return redirect('order_detail', pk=order.pk)
@@ -172,7 +180,7 @@ def order_create(request):
 
 @login_required
 def order_status_update(request, pk, status):
-    if not (request.user.is_admin() or request.user.is_accountant() or request.user.is_warehouse_manager() or request.user.is_delivery_person()):
+    if not (request.user.is_admin() or request.user.is_accountant() or request.user.is_warehouse_manager() or request.user.is_delivery_person() or request.user.is_cutter()):
         return redirect('dashboard')
     
     order = get_object_or_404(Order, pk=pk)
@@ -181,10 +189,12 @@ def order_status_update(request, pk, status):
         messages.error(request, "Only Admin/Accountant can assign delivery.")
         if request.user.is_warehouse_manager():
             return redirect('warehouse_dashboard')
+        elif request.user.is_cutter():
+            return redirect('cutter_dashboard')
         return redirect('order_detail', pk=pk)
 
     # Transition to 'ready' (Cutter finished)
-    if status == 'ready' and request.user.is_warehouse_manager():
+    if status == 'ready' and (request.user.is_warehouse_manager() or request.user.is_cutter()):
         if order.transition_to('ready', request.user):
             # Notify Accountant/Admin for delivery assignment
             msg = f"Order {order.invoice_number} is ready. Please assign delivery."
@@ -193,41 +203,46 @@ def order_status_update(request, pk, status):
             for assigner in assigners:
                 Notification.objects.create(user=assigner, message=msg, link=link)
             messages.success(request, f"Order {order.invoice_number} marked as Ready. Admin/Accountant notified.")
+            if request.user.is_cutter():
+                return redirect('cutter_dashboard')
             return redirect('warehouse_dashboard')
 
     # Transition to 'assigned' (Accountant assigns delivery)
     if status == 'assigned' and (request.user.is_admin() or request.user.is_accountant()):
-        delivery_choice = (request.POST.get('delivery_choice') or '').strip()
-        dp_id = (request.POST.get('delivery_partner_id') or '').strip()
-        method = (request.POST.get('delivery_method') or '').strip()
+        method = request.POST.get('delivery_method')
         ref_no = request.POST.get('delivery_reference_number')
+        dp_id = request.POST.get('delivery_partner_id')
+        self_name = request.POST.get('self_delivery_name')
 
-        if delivery_choice:
-            if ':' in delivery_choice:
-                method, dp_id = delivery_choice.split(':', 1)
-                method = method.strip()
-                dp_id = dp_id.strip()
-            else:
-                method = delivery_choice
-        
-        valid_methods = {choice[0] for choice in Order.DELIVERY_METHOD_CHOICES}
-        if not method or method not in valid_methods:
-            messages.error(request, "Please select a valid delivery option.")
-            return redirect('order_detail', pk=order.pk)
-
-        if not dp_id:
-            messages.error(request, "Please select a delivery person.")
-            return redirect('order_detail', pk=order.pk)
-
-        dp = get_object_or_404(User, id=dp_id)
-        order.delivery_partner = dp
         order.delivery_method = method
-        order.delivery_reference_number = ref_no
+        if method == 'delivery_man':
+            if not dp_id:
+                messages.error(request, "Please select a delivery man.")
+                return redirect('order_detail', pk=order.pk)
+            dp = get_object_or_404(User, id=dp_id)
+            order.delivery_partner = dp
+            order.delivery_reference_number = dp.vehicle_number # Auto-assign vehicle number
+        elif method == 'self':
+            order.delivery_reference_number = self_name
+            order.delivery_partner = None
+        else:
+            # Porter / Courier
+            order.delivery_reference_number = ref_no
+            order.delivery_partner = None
+            
+        # Notification for Warehouse Manager for dispatch prep (Self, Porter, Courier, Delivery Man)
+        msg = f"Order {order.invoice_number} assigned for {method.title()} dispatch."
+        warehouse_and_cutters = User.objects.filter(role__in=['warehouse_manager', 'cutter'])
+        for person in warehouse_and_cutters:
+            link = f"/orders/cutter/" if person.role == 'cutter' else f"/orders/warehouse/"
+            Notification.objects.create(user=person, message=msg, link=link)
+
         if order.transition_to('assigned', request.user):
-            msg = f"New delivery task assigned for Order {order.invoice_number}."
-            link = f"/orders/{order.id}/"
-            Notification.objects.create(user=dp, message=msg, link=link)
-            messages.success(request, f"Order {order.invoice_number} assigned to {dp.username}")
+            if order.delivery_partner:
+                msg = f"New delivery task assigned for Order {order.invoice_number}."
+                link = f"/orders/{order.id}/"
+                Notification.objects.create(user=order.delivery_partner, message=msg, link=link)
+            messages.success(request, f"Order {order.invoice_number} assigned via {method.title()}")
         else:
             messages.error(request, "Invalid status transition")
         return redirect('order_detail', pk=order.pk)
@@ -239,12 +254,31 @@ def order_status_update(request, pk, status):
     
     if request.user.is_warehouse_manager():
         return redirect('warehouse_dashboard')
+    elif request.user.is_cutter():
+        return redirect('cutter_dashboard')
     elif request.user.is_delivery_person():
         return redirect('delivery_dashboard')
     
     return redirect('order_detail', pk=pk)
 
 # Dashboards
+@login_required
+def cutter_dashboard(request):
+    if not request.user.is_cutter() and not request.user.is_admin():
+        return redirect('dashboard')
+    
+    # Active cutting tasks
+    active_tasks = Order.objects.filter(status__in=['created', 'cutting']).order_by('-created_at')
+    
+    # History of completed tasks by this cutter (if tracked)
+    # Since we don't track who cut it specifically in the model yet, we show recent 'ready' orders
+    history = Order.objects.filter(status__in=['ready', 'assigned', 'out_for_delivery', 'delivered', 'paid']).order_by('-updated_at')[:20]
+    
+    return render(request, 'orders/dashboard_cutter.html', {
+        'active_tasks': active_tasks,
+        'history': history
+    })
+
 @login_required
 def warehouse_dashboard(request):
     if not request.user.is_warehouse_manager() and not request.user.is_admin():
@@ -388,6 +422,7 @@ def order_mark_delivered(request, pk):
 
             mode = request.POST.get('mode')
             transaction_id = request.POST.get('transaction_id')
+            cheque_date = request.POST.get('cheque_date')
             
             from payments.models import Payment
             payment = Payment.objects.create(
@@ -395,6 +430,7 @@ def order_mark_delivered(request, pk):
                 amount=amount,
                 mode=mode,
                 transaction_id=transaction_id,
+                cheque_date=cheque_date if mode == 'cheque' else None,
                 recorded_by=request.user
             )
             
@@ -416,6 +452,13 @@ def order_mark_delivered(request, pk):
 
             if is_fully_paid:
                 order.transition_to('paid', request.user, notes=notes)
+            
+            # Notification for Admin/Accountant about delivery and payment
+            notif_msg = f"Order {order.invoice_number} marked delivered by {request.user.username}. Payment: ₹{amount} ({mode.upper()})"
+            notif_link = f"/orders/{order.id}/"
+            admin_accountants = User.objects.filter(role__in=['admin', 'accountant', 'superadmin'])
+            for user in admin_accountants:
+                Notification.objects.create(user=user, message=notif_msg, link=notif_link)
             
             # Update Ledger for payment
             Transaction.objects.create(

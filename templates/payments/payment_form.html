@@ -31,14 +31,19 @@
                     </div>
                     <div class="mb-3">
                         <label for="id_mode" class="form-label">Payment Mode</label>
-                        <select name="mode" id="id_mode" class="form-select" required>
+                        <select name="mode" id="id_mode" class="form-select" required onchange="toggleChequeDate()">
                             <option value="upi">UPI</option>
                             <option value="cash">Cash</option>
                             <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cheque">Cheque</option>
                         </select>
                     </div>
+                    <div class="mb-3" id="cheque-date-div" style="display:none;">
+                        <label for="id_cheque_date" class="form-label">Cheque Date</label>
+                        <input type="date" name="cheque_date" id="id_cheque_date" class="form-control">
+                    </div>
                     <div class="mb-3">
-                        <label for="id_transaction_id" class="form-label">Transaction Reference (Optional)</label>
+                        <label for="id_transaction_id" class="form-label">Transaction / Cheque No. (Optional)</label>
                         <input type="text" name="transaction_id" id="id_transaction_id" class="form-control">
                     </div>
                     <div class="mb-3">
@@ -53,4 +58,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleChequeDate() {
+        const mode = document.getElementById('id_mode').value;
+        const chequeDiv = document.getElementById('cheque-date-div');
+        const chequeInput = document.getElementById('id_cheque_date');
+        
+        if (mode === 'cheque') {
+            chequeDiv.style.display = 'block';
+            chequeInput.required = true;
+        } else {
+            chequeDiv.style.display = 'none';
+            chequeInput.required = false;
+        }
+    }
+</script>
 {% endblock %}

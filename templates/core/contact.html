@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contact Us - Bluebell Interiors{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-container {
+        min-height: calc(100vh - 56px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 40px 20px;
+    }
+    .contact-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        overflow: hidden;
+        width: 100%;
+        max-width: 1000px; /* Increased width for better balance */
+        display: flex;
+        flex-direction: row;
+        animation: fadeInUp 0.8s ease-out;
+        margin: auto; /* Ensure centering */
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .contact-info {
+        flex: 1;
+        background: var(--primary-color);
+        color: white;
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+    }
+    .contact-info::before {
+        content: "";
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .contact-form-area {
+        flex: 1.5;
+        padding: 60px 40px;
+        background: white;
+    }
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+        transition: transform 0.3s;
+    }
+    .info-item:hover {
+        transform: translateX(10px);
+    }
+    .info-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 20px;
+        color: var(--accent-color);
+    }
+    .contact-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .btn-contact {
+        background: var(--accent-color);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+    .btn-contact:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        color: white;
+    }
+    @media (max-width: 768px) {
+        .contact-card {
+            flex-direction: column;
+        }
+        .contact-info {
+            padding: 40px 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="contact-container">
+    <div class="contact-card">
+        <div class="contact-info">
+            <div class="mb-4 text-center">
+                <img src="{% static 'LogicWorks_logo.jpeg' %}" alt="Logic Works" width="80" height="80" style="border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                <h4 class="mt-3 fw-bold">Logic Works</h4>
+                <p class="small opacity-75">Crafting Digital Solutions</p>
+            </div>
+            <h2 class="fw-bold mb-4">Get In Touch</h2>
+            <p class="mb-5 opacity-75">Ready to streamline your business? Contact us to get your custom ERP solution today.</p>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="bi bi-globe"></i>
+                </div>
+                <div>
+                    <div class="small opacity-50">Website</div>
+                    <div class="fw-bold"><a href="https://logicworks.co.in" target="_blank" class="text-white text-decoration-none">logicworks.co.in</a></div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="bi bi-envelope"></i>
+                </div>
+                <div>
+                    <div class="small opacity-50">Email</div>
+                    <div class="fw-bold"><a href="mailto:logicworks.official@gmail.com" class="text-white text-decoration-none">logicworks.official@gmail.com</a></div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <div>
+                    <div class="small opacity-50">Location</div>
+                    <div class="fw-bold">India</div>
+                </div>
+            </div>
+
+            <div class="mt-auto">
+                <div class="d-flex gap-3">
+                    <a href="https://www.instagram.com/logic.works.official/" target="_blank" class="text-white opacity-50 hover-opacity-100 fs-4"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="contact-form-area">
+            <h1 class="contact-title">Wanna get a similar for you?</h1>
+            <p class="text-muted mb-4">Interested in a custom ERP solution for your business? Send us a message and our team will get back to you with a personalized demo.</p>
+            
+            <form action="{% url 'contact_us' %}" method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold">First Name</label>
+                        <input type="text" name="first_name" class="form-control" placeholder="John" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" placeholder="Doe" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Work Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="john@company.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Phone Number</label>
+                    <input type="tel" name="phone" class="form-control" placeholder="+91 98765 43210" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Message</label>
+                    <textarea name="message" class="form-control" rows="4" placeholder="Tell us about your business needs..." required></textarea>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-contact w-100">Send Message <i class="bi bi-send ms-2"></i></button>
+                </div>
+            </form>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'login' %}" class="text-decoration-none small text-muted">Back to Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

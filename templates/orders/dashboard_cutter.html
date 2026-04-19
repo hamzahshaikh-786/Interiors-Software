@@ -4,14 +4,15 @@
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Cutter Dashboard (Warehouse)</h1>
+    <h1 class="h2">Cutter Dashboard</h1>
 </div>
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Pending Cutting Tasks</h5>
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Active Cutting Tasks</h5>
+                <span class="badge bg-white text-primary rounded-pill">{{ active_tasks|length }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -20,38 +21,58 @@
                             <tr>
                                 <th>Invoice</th>
                                 <th>Party</th>
-                                <th>Items</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th>Items to Cut</th>
+                                <th>Current Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for order in tasks %}
+                            {% for order in active_tasks %}
                             <tr>
-                                <td>{{ order.invoice_number }}</td>
-                                <td>{{ order.party.name }}</td>
+                                <td class="fw-bold">{{ order.invoice_number }}</td>
                                 <td>
-                                    <ul class="list-unstyled mb-0 small">
+                                    {{ order.party.name }}
+                                    {% if order.party.alias %}
+                                    <div class="small text-muted">Alias: {{ order.party.alias }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0">
                                         {% for item in order.items.all %}
-                                        <li>{{ item.cloth_type.name }}: <strong>{{ item.quantity }} {{ item.cloth_type.unit }}</strong></li>
+                                        <li>
+                                            <i class="bi bi-scissors me-1 text-muted"></i>
+                                            {{ item.design_type.name }}: <strong>{{ item.quantity }} {{ item.design_type.unit }}</strong>
+                                        </li>
                                         {% endfor %}
                                     </ul>
                                 </td>
-                                <td><span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span></td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
+                                    <span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span>
+                                    <div class="small text-muted mt-1">{{ order.created_at|timesince }} ago</div>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
                                         {% if order.status == 'created' %}
-                                            <a href="{% url 'order_status_update' order.pk 'cutting' %}" class="btn btn-primary" onclick="return confirm('Are you sure you want to start cutting for this order?')">Start Cutting</a>
+                                            <a href="{% url 'order_status_update' order.pk 'cutting' %}" class="btn btn-primary btn-sm" onclick="return confirm('Start cutting for this order?')">
+                                                <i class="bi bi-play-fill"></i> Start Cutting
+                                            </a>
                                         {% elif order.status == 'cutting' %}
-                                            <a href="{% url 'order_status_update' order.pk 'ready' %}" class="btn btn-success" onclick="return confirm('Are you sure you want to mark this order as ready?')">Mark Ready</a>
+                                            <a href="{% url 'order_status_update' order.pk 'ready' %}" class="btn btn-success btn-sm" onclick="return confirm('Mark as Cut Completed and Ready for Dispatch?')">
+                                                <i class="bi bi-check-circle-fill"></i> Mark Ready
+                                            </a>
                                         {% endif %}
-                                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-info">Details</a>
+                                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-info btn-sm">
+                                            <i class="bi bi-eye"></i> Details
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-3">No pending cutting tasks found</td>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-check2-circle fs-1 d-block mb-2"></i>
+                                    No pending cutting tasks. Everything is up to date!
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -60,21 +81,20 @@
             </div>
         </div>
 
-        <div class="card shadow-sm mt-4">
+        <div class="card shadow-sm mb-5">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Recently Completed (Last 7 Days)</h5>
+                <h5 class="mb-0 text-muted">Recent History</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Invoice</th>
                                 <th>Party</th>
-                                <th>Items</th>
-                                <th>Completed On</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th>Completed At</th>
+                                <th>Details</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -82,24 +102,15 @@
                             <tr>
                                 <td>{{ order.invoice_number }}</td>
                                 <td>{{ order.party.name }}</td>
-                                <td>
-                                    <ul class="list-unstyled mb-0 small">
-                                        {% for item in order.items.all %}
-                                        <li>{{ item.cloth_type.name }}: <strong>{{ item.quantity }}</strong></li>
-                                        {% endfor %}
-                                    </ul>
-                                </td>
-                                <td>{{ order.updated_at|date:"d M, h:i A" }}</td>
                                 <td><span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                                <td>{{ order.updated_at|date:"d M, h:i A" }}</td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-info">Details</a>
-                                    </div>
+                                    <a href="{% url 'order_detail' order.pk %}" class="btn btn-link btn-sm p-0">View</a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-3">No recently completed tasks found</td>
+                                <td colspan="5" class="text-center py-3">No history available</td>
                             </tr>
                             {% endfor %}
                         </tbody>

@@ -52,15 +52,12 @@
                         <td>₹{{ order.grand_total }}</td>
                         <td>
                             <span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span>
-                            {% if order.delivery_partner %}
-                                <div class="small text-muted">To: {{ order.delivery_partner.username }}</div>
-                                <div class="small text-muted">Method: {{ order.get_delivery_method_display }}</div>
-                                {% if order.delivery_reference_number %}
-                                    <div class="small text-muted">Vehicle / Ref: {{ order.delivery_reference_number }}</div>
-                                {% endif %}
-                                {% if order.assigned_at %}
-                                    <div class="small text-muted">Assigned: {{ order.assigned_at|date:"d M Y, h:i A" }}</div>
-                                {% endif %}
+                            {% if order.delivery_method and order.status != 'created' and order.status != 'cutting' and order.status != 'ready' %}
+                                <div class="small text-muted mt-1">
+                                    ({{ order.get_delivery_method_display }}
+                                    {% if order.delivery_partner %}/ {{ order.delivery_partner.username }}{% endif %}
+                                    {% if order.delivery_reference_number %}/ {{ order.delivery_reference_number }}{% endif %})
+                                </div>
                             {% endif %}
                         </td>
                         <td>{{ order.created_at|date:"d M Y" }}</td>

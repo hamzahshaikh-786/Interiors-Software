@@ -177,6 +177,8 @@ def purchase_entry_create(request):
         quantities = request.POST.getlist('quantity')
         conditions = request.POST.getlist('material_condition')
         colour_matches = request.POST.getlist('design_colour_match')
+        tagging_dones = request.POST.getlist('tagging_done')
+        vias = request.POST.getlist('via')
         
         purchaser = get_object_or_404(Purchaser, id=purchaser_id)
         
@@ -187,7 +189,7 @@ def purchase_entry_create(request):
                 reference_bill_number=""
             )
             
-            for d_id, qty, cond, match in zip(design_ids, quantities, conditions, colour_matches):
+            for d_id, qty, cond, match, tag, via in zip(design_ids, quantities, conditions, colour_matches, tagging_dones, vias):
                 if not d_id: continue
                 design = get_object_or_404(DesignType, id=d_id)
                 PurchaseItem.objects.create(
@@ -195,7 +197,9 @@ def purchase_entry_create(request):
                     design_type=design,
                     quantity=qty,
                     material_condition=cond,
-                    design_colour_match=match
+                    design_colour_match=match,
+                    tagging_done=tag == 'yes',
+                    via=via
                 )
             
             # Create notifications for Admin/Accountant

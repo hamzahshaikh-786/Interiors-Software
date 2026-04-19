@@ -36,10 +36,15 @@
                             <option value="upi">UPI</option>
                             <option value="cash">Cash</option>
                             <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cheque">Cheque</option>
                         </select>
                     </div>
+                    <div class="mb-3" id="cheque-date-div" style="display:none;">
+                        <label for="cheque_date" class="form-label">Cheque Date</label>
+                        <input type="date" name="cheque_date" id="cheque_date" class="form-control">
+                    </div>
                     <div class="mb-3">
-                        <label for="transaction_id" class="form-label">Transaction Reference (Optional)</label>
+                        <label for="transaction_id" class="form-label">Transaction / Cheque No. (Optional)</label>
                         <input type="text" name="transaction_id" id="transaction_id" class="form-control">
                     </div>
                     <div class="d-grid gap-2">
@@ -78,6 +83,16 @@
                 qrCard.style.display = 'block';
             } else {
                 qrCard.style.display = 'none';
+            }
+            
+            const chequeDiv = document.querySelector('#cheque-date-div');
+            const chequeInput = document.querySelector('#cheque_date');
+            if (this.value === 'cheque') {
+                chequeDiv.style.display = 'block';
+                chequeInput.required = true;
+            } else {
+                chequeDiv.style.display = 'none';
+                chequeInput.required = false;
             }
         });
     });

@@ -18,11 +18,11 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="party" class="form-label">Party / Vendor</label>
-                            <select name="party" id="party" class="form-select select2-party" required>
-                                <option value="">Select party...</option>
-                                {% for p in parties %}
-                                <option value="{{ p.id }}">{{ p.name }}</option>
+                            <label for="vendor" class="form-label">Vendor</label>
+                            <select name="vendor" id="vendor" class="form-select select2-vendor" required>
+                                <option value="">Select vendor...</option>
+                                {% for v in vendors %}
+                                <option value="{{ v.id }}">{{ v.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -88,9 +88,9 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        $('.select2-party').select2({
+        $('.select2-vendor').select2({
             theme: 'bootstrap-5',
-            placeholder: 'Select party...',
+            placeholder: 'Select vendor...',
             width: '100%'
         });
 

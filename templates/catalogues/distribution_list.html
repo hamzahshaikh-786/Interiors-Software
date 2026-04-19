@@ -6,9 +6,39 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Catalogue Distributions</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{% url 'catalogue_distribution_add' %}" class="btn btn-sm btn-primary">
+        <a href="{% url 'catalogue_distribution_create' %}" class="btn btn-sm btn-primary">
             <i class="bi bi-plus"></i> New Distribution
         </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="party" class="form-label">Filter by Party</label>
+                <select name="party" id="party" class="form-select select2-party">
+                    <option value="">All Parties</option>
+                    {% for p in parties %}
+                    <option value="{{ p.id }}" {% if request.GET.party == p.id|stringformat:"i" %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request.GET.start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request.GET.end_date }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="btn-group w-100">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="?" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -50,4 +80,16 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.select2-party').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'All Parties',
+            width: '100%'
+        });
+    });
+</script>
 {% endblock %}

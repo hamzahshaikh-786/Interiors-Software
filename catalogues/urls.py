@@ -13,14 +13,14 @@ urlpatterns = [
 
     # Purchases
     path('purchases/', views.catalogue_purchase_list, name='catalogue_purchase_list'),
-    path('purchases/add/', views.catalogue_purchase_create, name='catalogue_purchase_add'),
+    path('purchases/add/', views.catalogue_purchase_create, name='catalogue_purchase_create'),
 
     # Distributions
     path('distributions/', views.catalogue_distribution_list, name='catalogue_distribution_list'),
-    path('distributions/add/', views.catalogue_distribution_create, name='catalogue_distribution_add'),
+    path('distributions/add/', views.catalogue_distribution_create, name='catalogue_distribution_create'),
 
     # Visits
     path('visits/', views.catalogue_visit_list, name='catalogue_visit_list'),
-    path('visits/add/', views.catalogue_visit_create, name='catalogue_visit_add'),
+    path('visits/add/', views.catalogue_visit_create, name='catalogue_visit_create'),
     path('ajax/assigned-catalogues/<int:party_id>/', views.get_assigned_catalogues, name='ajax_assigned_catalogues'),
 ]

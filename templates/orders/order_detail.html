@@ -2,6 +2,36 @@
 
 {% block title %}Order Details - Interior Soft{% endblock %}
 
+{% block extra_js %}
+<script>
+    function toggleDeliveryOptions() {
+        const method = document.getElementById('delivery_method').value;
+        const selfDiv = document.getElementById('self-name-div');
+        const deliveryManDiv = document.getElementById('delivery-man-div');
+        const refNoDiv = document.getElementById('ref-no-div');
+
+        if (selfDiv) selfDiv.style.display = 'none';
+        if (deliveryManDiv) deliveryManDiv.style.display = 'none';
+        if (refNoDiv) refNoDiv.style.display = 'none';
+
+        if (method === 'self') {
+            if (selfDiv) selfDiv.style.display = 'block';
+        } else if (method === 'delivery_man') {
+            if (deliveryManDiv) deliveryManDiv.style.display = 'block';
+        } else if (method === 'porter' || method === 'courier') {
+            if (refNoDiv) refNoDiv.style.display = 'block';
+        }
+    }
+    
+    // Initial call in case of page reload with value
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('delivery_method')) {
+            toggleDeliveryOptions();
+        }
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Order: {{ order.invoice_number }}</h1>
@@ -25,11 +55,13 @@
         </a>
         {% endif %}
         
-        {% if user.is_admin or user.is_warehouse_manager %}
+        {% if user.is_admin or user.is_warehouse_manager or user.is_cutter %}
             {% if order.status == 'created' %}
                 <a href="{% url 'order_status_update' order.pk 'cutting' %}" class="btn btn-sm btn-primary" onclick="return confirm('Are you sure you want to start cutting for this order?')">Start Cutting</a>
             {% elif order.status == 'cutting' %}
                 <a href="{% url 'order_status_update' order.pk 'ready' %}" class="btn btn-sm btn-success" onclick="return confirm('Mark as Cut Completed?')">Mark Ready</a>
+            {% elif order.status == 'assigned' and user.is_warehouse_manager %}
+                <a href="{% url 'order_status_update' order.pk 'out_for_delivery' %}" class="btn btn-sm btn-info" onclick="return confirm('Mark as Dispatched?')">Mark Dispatched</a>
             {% endif %}
         {% endif %}
     </div>
@@ -48,37 +80,41 @@
                     {% csrf_token %}
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="delivery_choice" class="form-label">Delivery</label>
-                            <select name="delivery_choice" id="delivery_choice" class="form-select" required>
-                                <option value="">Select Delivery...</option>
-                                <optgroup label="Self">
-                                    {% for dp in delivery_partners %}
-                                    <option value="self:{{ dp.id }}">Self — {{ dp.username }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                                <optgroup label="Porter">
-                                    {% for dp in delivery_partners %}
-                                    <option value="porter:{{ dp.id }}">Porter — {{ dp.username }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                                <optgroup label="Courier">
-                                    {% for dp in delivery_partners %}
-                                    <option value="courier:{{ dp.id }}">Courier — {{ dp.username }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                                <optgroup label="Delivery Man">
-                                    {% for dp in delivery_partners %}
-                                    <option value="delivery_man:{{ dp.id }}">Delivery Man — {{ dp.username }}</option>
-                                    {% endfor %}
-                                </optgroup>
+                            <label for="delivery_method" class="form-label">Delivery Method</label>
+                            <select name="delivery_method" id="delivery_method" class="form-select" required onchange="toggleDeliveryOptions()">
+                                <option value="">Select Method...</option>
+                                <option value="self">Self</option>
+                                <option value="porter">Porter</option>
+                                <option value="courier">Courier</option>
+                                <option value="delivery_man">Delivery Man</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="delivery_reference_number" class="form-label">Vehicle No / Ref No</label>
-                            <input type="text" name="delivery_reference_number" id="delivery_reference_number" class="form-control" placeholder="Optional">
+
+                        <!-- Self Name Input -->
+                        <div class="col-md-6" id="self-name-div" style="display:none;">
+                            <label for="self_delivery_name" class="form-label">Recipient Name</label>
+                            <input type="text" name="self_delivery_name" id="self_delivery_name" class="form-control" placeholder="Enter name">
                         </div>
+
+                        <!-- Delivery Man Dropdown -->
+                        <div class="col-md-6" id="delivery-man-div" style="display:none;">
+                            <label for="delivery_partner_id" class="form-label">Select Delivery Man</label>
+                            <select name="delivery_partner_id" id="delivery_partner_id" class="form-select">
+                                <option value="">Select Delivery Man...</option>
+                                {% for dp in delivery_partners %}
+                                <option value="{{ dp.id }}">{{ dp.username }} {% if dp.vehicle_number %}({{ dp.vehicle_number }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Porter/Courier Ref No -->
+                        <div class="col-md-6" id="ref-no-div" style="display:none;">
+                            <label for="delivery_reference_number" class="form-label">Reference / Vehicle No</label>
+                            <input type="text" name="delivery_reference_number" id="delivery_reference_number" class="form-control" placeholder="Porter Vehicle / Courier Tracking">
+                        </div>
+
                         <div class="col-md-6 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">Assign & Notify Delivery</button>
+                            <button type="submit" class="btn btn-primary w-100">Assign & Notify</button>
                         </div>
                     </div>
                 </form>
@@ -99,20 +135,16 @@
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1 text-muted">Status</p>
-                        <h6><span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span></h6>
-                        {% if order.delivery_partner %}
-                            <div class="small text-muted">Assigned To: {{ order.delivery_partner.username }}</div>
-                            <div class="small text-muted">Method: {{ order.get_delivery_method_display }}</div>
-                            {% if order.delivery_reference_number %}
-                                <div class="small text-muted">Vehicle / Ref: {{ order.delivery_reference_number }}</div>
+                        <h6>
+                            <span class="badge badge-status-{{ order.status }}">{{ order.get_status_display }}</span>
+                            {% if order.delivery_method and order.status != 'created' and order.status != 'cutting' and order.status != 'ready' %}
+                                <div class="small text-muted mt-1">
+                                    ({{ order.get_delivery_method_display }}
+                                    {% if order.delivery_partner %}/ {{ order.delivery_partner.username }}{% endif %}
+                                    {% if order.delivery_reference_number %}/ {{ order.delivery_reference_number }}{% endif %})
+                                </div>
                             {% endif %}
-                            {% if assigned_history %}
-                                <div class="small text-muted">Assigned At: {{ assigned_history.timestamp|date:"d M Y, h:i A" }}</div>
-                                {% if assigned_history.updated_by %}
-                                    <div class="small text-muted">Assigned By: {{ assigned_history.updated_by.username }}</div>
-                                {% endif %}
-                            {% endif %}
-                        {% endif %}
+                        </h6>
                     </div>
                     <div class="col-md-12">
                         <p class="mb-1 text-muted">Delivery Address</p>

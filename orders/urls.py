@@ -9,6 +9,7 @@ urlpatterns = [
     
     # Dashboards
     path('warehouse/', views.warehouse_dashboard, name='warehouse_dashboard'),
+    path('cutter/', views.cutter_dashboard, name='cutter_dashboard'),
     path('delivery/', views.delivery_dashboard, name='delivery_dashboard'),
     
     # Delivery Actions
