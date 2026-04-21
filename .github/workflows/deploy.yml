@@ -23,3 +23,5 @@ jobs:
             /root/apps/bluebells/project/Interiors-Software/venv/bin/python manage.py migrate
             /root/apps/bluebells/project/Interiors-Software/venv/bin/python manage.py collectstatic --noinput
             sudo systemctl restart bluebells
+
+# force refresh
