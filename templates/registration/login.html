@@ -115,6 +115,7 @@
         width: 50%;
         background: #f8f9fa;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         padding: 40px;
@@ -147,15 +148,49 @@
         from, to { border-color: transparent }
         50% { border-color: white; }
     }
+    .powered-by-fixed {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        z-index: 2;
+    }
     @media (max-width: 768px) {
         .login-container {
             flex-direction: column;
             min-height: auto;
+            overflow-y: auto;
         }
         .login-left, .login-right {
-            flex: 0 0 100%;
+            flex: 0 0 auto;
             width: 100%;
-            min-height: 50vh;
+            min-height: auto;
+            padding: 40px 20px;
+        }
+        .login-left {
+            min-height: 40vh;
+        }
+        .login-right {
+            background: #fff;
+            padding-bottom: 100px; /* Space for powered-by */
+        }
+        .login-right .card {
+            max-width: 100% !important;
+            margin: 0;
+            box-shadow: none !important;
+        }
+        .powered-by-fixed {
+            position: relative !important;
+            bottom: auto !important;
+            left: auto !important;
+            transform: none !important;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            width: 100%;
+        }
+        .typing-effect {
+            font-size: 1.8rem;
         }
     }
 </style>
@@ -177,7 +212,7 @@
         </div>
     </div>
     <div class="login-right">
-        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; max-width: 400px; z-index: 2;">
+        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px; width: 100%; z-index: 2;">
             <div class="text-center mb-4">
                 <i class="bi bi-shield-lock profile-icon" style="font-size: 3rem;"></i>
                 <h3 class="mt-2 fw-bold">Login</h3>
@@ -187,7 +222,7 @@
                 {% csrf_token %}
                 {{ form|crispy }}
                 <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg" style="border-radius: 10px;">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="border-radius: 10px; background-color: #2c3e50; border: none;">
                         Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
                     </button>
                 </div>
@@ -198,7 +233,7 @@
         </div>
 
         <!-- Powered by Logic Works -->
-        <div class="text-center" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%;">
+        <div class="text-center mt-4">
             <p class="text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">Powered by</p>
             <div class="d-flex align-items-center justify-content-center gap-2">
                 <img src="{% static 'LogicWorks_logo.jpeg' %}" alt="Logic Works" width="20" height="20" style="border-radius: 4px; filter: grayscale(20%);">

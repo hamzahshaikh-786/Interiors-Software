@@ -98,11 +98,34 @@
         .register-container {
             flex-direction: column;
             min-height: auto;
+            overflow-y: auto;
         }
         .register-left, .register-right {
-            flex: 0 0 100%;
+            flex: 0 0 auto;
             width: 100%;
-            min-height: 50vh;
+            min-height: auto;
+            padding: 40px 20px;
+        }
+        .register-left {
+            min-height: 30vh;
+        }
+        .register-right {
+            background: #fff;
+            padding-bottom: 80px;
+        }
+        .register-right .card {
+            max-width: 100% !important;
+            margin: 0;
+            box-shadow: none !important;
+        }
+        .powered-by-fixed {
+            position: relative !important;
+            bottom: auto !important;
+            left: auto !important;
+            transform: none !important;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            width: 100%;
         }
     }
 </style>
@@ -143,7 +166,7 @@
         </div>
 
         <!-- Powered by Logic Works -->
-        <div class="text-center" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%;">
+        <div class="text-center powered-by-fixed" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%;">
             <p class="text-muted mb-1" style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">Powered by</p>
             <div class="d-flex align-items-center justify-content-center gap-2">
                 <img src="{% static 'LogicWorks_logo.jpeg' %}" alt="Logic Works" width="20" height="20" style="border-radius: 4px; filter: grayscale(20%);">
