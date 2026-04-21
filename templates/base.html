@@ -357,6 +357,20 @@
                 {% if user.is_authenticated %}
                 <div class="d-flex align-items-center">
                     <li class="nav-item dropdown me-2 list-unstyled">
+                        <a class="nav-link dropdown-toggle text-white p-0" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle fs-5"></i>
+                            <span class="d-none d-sm-inline ms-1">{{ user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" class="px-3 py-1 m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger w-100">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown list-unstyled">
                         <a class="nav-link dropdown-toggle text-white p-0" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell fs-5"></i>
                             {% if unread_notifications_count > 0 %}
@@ -376,20 +390,6 @@
                             <div class="p-3 text-center text-muted small">No new notifications</div>
                             {% endfor %}
                         </div>
-                    </li>
-                    <li class="nav-item dropdown list-unstyled">
-                        <a class="nav-link dropdown-toggle text-white p-0" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle fs-5"></i>
-                            <span class="d-none d-sm-inline ms-1">{{ user.username }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li>
-                                <form action="{% url 'logout' %}" method="post" class="px-3 py-1 m-0">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger w-100">Logout</button>
-                                </form>
-                            </li>
-                        </ul>
                     </li>
                 </div>
                 {% else %}
